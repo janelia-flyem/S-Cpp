@@ -1,0 +1,172 @@
+{"data": [
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [911.000000, 980.999000, 25]}, "partners": [
+   {"confidence": 0.500000, "location": [2527.000000, 62.000000, 73]},
+   {"confidence": 1.000000, "location": [1188.000000, 1950.000000, 77]},
+   {"confidence": 1.000000, "location": [3809.000000, 1702.000000, 108]},
+   {"confidence": 0.500000, "location": [935.000000, 1105.000000, 226]} 
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [218.000000, 420.000000, 1]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [548.000000, 421.000000, 31]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [654.000000, 908.000000, 67]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [952.000000, 886.000000, 169]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [879.000000, 117.000000, 293]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [52.000000, 231.000000, 160]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [478.000000, 863.000000, 99]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [283.000000, 142.000000, 32]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [297.000000, 469.000000, 37]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [442.000000, 689.000000, 265]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [718.000000, 796.000000, 182]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [216.000000, 578.000000, 27]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [477.000000, 607.000000, 128]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [840.000000, 706.000000, 97]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [206.000000, 95.000000, 43]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [294.000000, 688.000000, 293]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [130.000000, 703.000000, 193]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [638.000000, 474.000000, 111]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [256.000000, 185.000000, 239]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [811.000000, 600.000000, 86]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [170.000000, 759.000000, 200]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [190.000000, 93.000000, 92]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [633.000000, 441.000000, 144]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [731.000000, 354.000000, 17]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [134.000000, 799.000000, 83]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [630.000000, 373.000000, 123]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [811.000000, 744.000000, 12]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [89.000000, 135.000000, 250]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [204.000000, 878.000000, 208]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [308.000000, 918.000000, 12]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [34.000000, 183.000000, 149]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [963.000000, 816.000000, 194]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [224.000000, 343.000000, 167]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [412.000000, 821.000000, 255]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [276.000000, 115.000000, 267]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [935.000000, 580.000000, 226]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [365.000000, 341.000000, 97]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [397.000000, 856.000000, 89]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [76.000000, 257.000000, 10]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [221.000000, 912.000000, 243]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [198.000000, 841.000000, 118]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [882.000000, 277.000000, 220]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [861.000000, 339.000000, 201]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [142.000000, 404.000000, 35]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [733.000000, 552.000000, 73]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [137.000000, 203.000000, 90]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [167.000000, 771.000000, 1]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [228.000000, 696.000000, 130]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [95.000000, 790.000000, 200]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [752.000000, 686.000000, 180]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [691.000000, 7.000000, 248]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [792.000000, 127.000000, 104]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [345.000000, 158.000000, 1]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [124.000000, 215.000000, 56]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [154.000000, 890.000000, 1]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [603.000000, 378.000000, 293]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [168.000000, 700.000000, 164]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [104.000000, 259.000000, 135]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [572.000000, 916.000000, 219]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [641.000000, 925.000000, 54]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [606.000000, 574.000000, 49]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [804.000000, 550.000000, 110]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [421.000000, 901.000000, 199]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [87.000000, 304.000000, 81]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [653.000000, 873.000000, 78]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [766.000000, 775.000000, 198]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [819.000000, 466.000000, 16]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [71.000000, 591.000000, 78]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [389.000000, 450.000000, 90]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [73.000000, 576.000000, 220]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [418.000000, 438.000000, 1]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [659.000000, 394.000000, 293]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [205.000000, 693.000000, 169]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [120.000000, 548.000000, 1]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [734.000000, 365.000000, 1]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [447.000000, 50.000000, 140]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [581.000000, 566.000000, 122]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [206.000000, 156.000000, 234]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [71.000000, 171.000000, 221]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [419.000000, 606.000000, 152]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [944.000000, 859.000000, 207]}, "partners": [
+]},
+{"T-bar": {"status": "working", "confidence": 1.000000, "body ID": -1, "location": [198.000000, 135.000000, 201]}, "partners": [
+]} 
+]}

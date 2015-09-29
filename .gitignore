@@ -23,6 +23,11 @@ incgammabeta.h
 s
 svd.h
 synapse.json
+AllNamedBodies.json
+FixFile
+KCdata.txt
+gimme_overlaps
+hm
 
 *.html
 *.csv

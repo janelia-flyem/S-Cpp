@@ -1,0 +1,24 @@
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+annotations-body.json
+fitab.h
+fit_examples.h
+fitlin.h
+fitmrq.h
+fitsvd.h
+gamma.h
+gaussj.h
+hm.part.2
+incgammabeta.h
+*.net
+s
+svd.h
+synapse.json

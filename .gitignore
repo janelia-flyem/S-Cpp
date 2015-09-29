@@ -17,8 +17,16 @@ fitsvd.h
 gamma.h
 gaussj.h
 hm.part.2
+nr3.h
 incgammabeta.h
 *.net
 s
 svd.h
 synapse.json
+
+*.html
+*.csv
+*.out
+*.png
+*.log
+

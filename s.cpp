@@ -814,100 +814,8 @@ int summary[] = {
    0, 2, 0, 0, 0, 3, 0, 1,  // e
    0, 3, 2, 0, 0, 0, 4, 0   // f
    };
-int scolors[] = {0xFFFFFF, 0xFFFF88, 0xFF88FF, 0x88FFFF, 0xFF8888, 0x88FF88, 0x8888FF};
 
-vector<int> dirs(7,0);
 
-const char *labels = "UHabcdef";
-fprintf(fp,"<p><pre>\n");
-fprintf(fp,"       Posterior\n");
-fprintf(fp,"\n");
-fprintf(fp,"          b c\n");
-fprintf(fp,"Dorsal   a H d   Ventral\n");
-fprintf(fp,"          f e\n");
-fprintf(fp,"\n");
-fprintf(fp,"       Anterior\n");
-fprintf(fp,"</pre>\n");
-
-fprintf(fp,"Table of cross column connections.  U = unknown or not columnar, H = home column, a-f surrounding columns.  Connections between nearest neighbors are indicated in color - one color for each of the 6 directions possible for a nearest neighbor.\n");
-fprintf(fp,"<TABLE> <TR> <TD>\n"); // giant table containing two tables.
-fprintf(fp, "<TABLE BORDER=4 CELLSPACING=4 CELLPADDING=4>\n");
-fprintf(fp, "<colgroup>\n");
-fprintf(fp, "    <col style=\"width: 20%\" />\n");
-for(int k=0; k<8; k++)
-    fprintf(fp, "    <col style=\"width: 10%\" />\n");
-fprintf(fp, "  </colgroup>\n");
-
-fprintf(fp, "<caption> Cross column connections </caption>\n");
-fprintf(fp, "<TR><TD> Column ");
-for(int k=0; k<8; k++)
-    fprintf(fp, "<TD> %c ", labels[k]);
-fprintf(fp, "</TD></TR>\n");
-fprintf(fp, "</TABLE>\n");
-fprintf(fp, "<TD> <p>Each of the 6 basic directions occurs 4 times in our 7-column data.  For example, a->H, H->d, b->c, and f->e all represent the same displacement vector.  Here we sum the 4 entries that have the same direction, in each of the 6 basic directions.</p>\n");
-
-// Table of summary by direction.
-fprintf(fp, "<TABLE BORDER=4 CELLSPACING=4 CELLPADDING=4>\n");
-fprintf(fp, "<caption> Summary of connections by direction</caption>\n");
-for(int k=1; k<=6; k++) {
-    if (input)
-        fprintf(fp, "<TR><TD BGCOLOR=\"#%06x\"> %c->H <TD> %d </TD></TR>\n", scolors[k], 'a'+k-1, dirs[k]);
-    else
-        fprintf(fp, "<TR><TD BGCOLOR=\"#%06x\"> H->%c <TD> %d </TD></TR>\n", scolors[k], 'a'+k-1, dirs[k]);
-    }
-fprintf(fp, "</TABLE>\n");
-
-fprintf(fp, "</TD></TR>\n");  // end the giant table
-fprintf(fp, "</TABLE>\n");
-
-fprintf(fp,"</p>\n");
-
-// Now write another table, with each color, a cell of that color, and some data about it
-// This table (a sorted version of info from the first table) seems not so useful.  So ignore it for now.
-if (false) {
-    vector<sortconn>s;
-    set<int>::iterator it;
-    for(it = colors.begin(); it != colors.end(); it++) {
-	// go through the table, collecting data about that color
-	MeanStd m;
-	const char *example;
-	for(int i=0; i<rows.size(); i++) {
-	    for(int j=0; j<rows[i].size(); j++) {
-		if (color(names[rows[i][j]]) == *it) {
-		    example = names[rows[i][j]];
-		    m.Element(dat[i][j]);
-		    }
-		}
-	    }
-	sortconn ss;
-	ss.name = example;
-	ss.count = m.HowMany();
-	m.Stats(ss.mean, ss.std);
-	s.push_back(ss);
-	}
-    sort(s.begin(), s.end());   // sort by mean strength
-
-    fprintf(fp,"<p>\n");
-    fprintf(fp, "<TABLE BORDER=4 CELLSPACING=4 CELLPADDING=4>\n");
-    fprintf(fp, "<caption> Statistics of the connections between cell types, from table </caption>\n");
-    fprintf(fp, "<TD> Cell type <TD> Count <TD> Per inst. <TD> Mean <TD> Std. Dev <TD> Dev as %% of Mean<TD> Total %%"
-    "</TD></TR>\n");
-    for(int i=0; i<s.size(); i++) {
-        const char *p = BaseName(s[i].name);
-        fprintf(fp, "<TD BGCOLOR=\"#%06x\"><pre>%s</pre>\n", color(s[i].name), p);
-        fprintf(fp, "<TD> %d <TD> %.2f <TD> %.2f\n", s[i].count, double(s[i].count)/row_ids.size(), s[i].mean); //mean
-        if (s[i].count == 1)
-	    fprintf(fp,"<TD> <TD>");  // no std if only one.
-        else {
-            fprintf(fp, "<TD> %.2f\n", s[i].std); //std
-            fprintf(fp, "<TD> %.2f%%\n", s[i].std/s[i].mean*100.0);  //frac
-            }
-        fprintf(fp, "<TD> %.2f%%\n", s[i].mean*s[i].count/double(total)*100.0);
-        fprintf(fp, "</TD> </TR>\n");
-        };
-    fprintf(fp, "</TABLE>\n");
-    fprintf(fp,"</p>\n");
-    }
 //-------------------------------------- Now write the table of ALL connections, not just those in table
 total = 0;                          // Now re-do total to include all
 for(int i=0; i<NumTypes; i++) {
@@ -3105,6 +3013,27 @@ CircuitBacktrace(name_map[root], from_to, names, wanted, trace, threshold);
 // sort the names by their assigned color.  (Better than names, which sort oddly in Mi1, Mi15, Mi1b, etc.)
 // Since columns a, c,e, and f are pale, and others yellow ometidia , we want them to sort together.   So map, then unmap.
 vector<sortname> sn(M);
+for(int k=0; k<names.size(); k++) {
+    //              a->  b->  c->  d->  e->  f->
+    sn[k].index = k;
+    // Normally, we sort by color.  This is an integer 0..2^24-1.  All cells of the same type have the same color,
+    // so this sorts by cell type.  Next we sort by name - this puts the columns A-F at the top of the table.
+    // But for non-columnar cells, columns make no sense, so we'd like to sort by size.  We can do this by
+    // adding a small (less than 1.0) fraction to the color.  Since color overrides name, this will sort them
+    // correctly.  And for columnar cells, color will still be identical, so sort will go to second key, name.
+    sn[k].color = color(names[k]);
+    printf("Tweaking %s by %f\n", names[k], volumes[k]/1e6);
+    sn[k].color += 1-volumes[k]/1e6;
+    sn[k].name  = names[k];
+    char *last = names[k] + strlen(names[k]) -1;
+}
+sort(sn.begin(), sn.end() );
+
+// reverse the mapping
+for(int k=0; k<names.size(); k++) {
+    //              a->  b->  c->  d->  e->  f->
+    char *last = names[k] + strlen(names[k]) -1;
+}
 vector<sort_down> sa(M);  // create a sort array
 int cc = 0;            // current color
 

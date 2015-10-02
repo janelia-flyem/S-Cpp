@@ -98,14 +98,6 @@ class sortname {
     bool operator<(const sortname &rhs) const {return this->color < rhs.color || (this->color == rhs.color && strcmp(this->name,rhs.name) < 0);}
     };
 
-class sortconn {
-  public:
-    const char *name;
-    int count;
-    double mean, std;
-    bool operator<(const sortconn &rhs) const {return this->mean*this->count > rhs.mean*rhs.count;}  // highest first
-    };
-
 // general purpose sorter when we want to sort the display of an array by some value
 class sorter {
   public:
@@ -181,11 +173,6 @@ class NeuroTr {
     const char *how_re;   // how is this known
     };
 
-class Zoid {
-    public:
-	Point pts[4];
-    Zoid(Point p0, Point p1, Point p2, Point p3) { pts[0] = p0; pts[1] = p1; pts[2] = p2; pts[3] = p3;}
-    };
 
 vector<NeuroTr> NeuroTransmitters;
 
@@ -335,26 +322,6 @@ return NumTypes-1;
 }
 
 
-// Print stats about an entry in HTML.  If none, print 3 blanks.  If one, print count and mean.
-// If more than one, add std deviation.
-// If the 
-void PrintEntries(FILE *fp, MeanStd m, double *all = NULL, double *weak = NULL){
-char c = ' ';
-if (all != NULL) { // if we want to add to statistics
-    *all += m.Sum();
-    if (m.HowMany() <= 3) {
-	*weak += m.Sum();
-        c = '+';
-	}
-    }
-if (m.HowMany() == 0)
-    fprintf(fp, "<TD><TD><TD>\n");
-else if (m.HowMany() == 1)
-    fprintf(fp, "<TD>%d<TD>%.2f%c<TD>\n", m.HowMany(), m.Mean(), c);
-else {
-    fprintf(fp, "<TD>%d<TD>%.2f%c<TD>%.2f\n", m.HowMany(), m.Mean(), c, m.Std());
-    }
-}
 
 // Take a vector of doubles, return a vector of bools that indicates the 7 (at most) largest.
 // Do not include any that are marked incomplete
@@ -1035,22 +1002,6 @@ for(int i=0; i<row_ids.size(); i++) {
     }
 
 }
-//---------------------------------- Print out a stereotypy table.
-void PrintStereo(FILE *fd, vector<CellStat> &stats, vector<sort_down> &sa, const char *label) {
-// Contents go here
-fprintf(fd, "<p>%s\n<TABLE BORDER=4 CELLSPACING=4 CELLPADDING=4>\n", label);
-fprintf(fd, "<TR><TD> &sigma; inputs<TD>&sigma; outputs<TD>&sigma; volume<TD>&sigma; area<TD>Used/Total<TD>Name</TD></TR>\n");
-for(int i=sa.size()-1; i >= 0; i--) { // since array sorts backwards
-    int j = sa[i].index;
-    // Only print the ones with at least 2 complete cells
-    if (CellStats[j].used_stats >= 2) {
-        fprintf(fd, "<TR><TD>%.2f%% <TD>%.2f%%<TD> %.2f%%<TD> %.2f%%<TD> %d/%d<TD BGCOLOR=\"#%06x\"> %s</TD></TR>\n", 
-         CellStats[j].in_dev*100, CellStats[j].out_dev*100, CellStats[j].volume_dev*100, CellStats[j].area_dev*100, 
-         CellStats[j].used_stats, CellStats[j].how_many, CellStats[j].color, CellStats[j].name);
-	}
-   }
-fprintf(fd, "</TABLE>\n</p>\n");
-}
 
 // breaks a list up into comma separated parts.  Allocates results so the argument does not need to be saved.
 vector<const char *> CommaList(char *list) {
@@ -1060,189 +1011,8 @@ for(char *p = strtok(list, ","); p != NULL; p = strtok(NULL, ",") )
 return rslt;
 }
 
-double Inner(vector<double> &a, vector<double> &b) {
-if (a.size() != b.size() ){
-    printf("Bogus sizes\n");
-    exit(42);
-    }
-double aa = 0.0, bb = 0.0, ab = 0.0;
-for(int i=0; i<a.size(); i++) {
-    aa += a[i]*a[i];
-    bb += b[i]*b[i];
-    ab += a[i]*b[i];
-    }
-//printf("aa = %f bb = %f ab = %f\n", aa, bb, ab);
-if (aa*bb <= 0.0)  // should never happen
-    return 0.0;
-return ab/sqrt(aa*bb);
-}
 
-// Figure out odds that the cell with measurements InProfile and OutProfile could be a fragment of a neuron of
-// type k.
-//
-double CouldBeOdds(int k, vector<int> &InProfile, vector<int> &OutProfile, vector<vector<int> > &Strongest)
-{
-double rslt = 1.0;
-// compare the observed outs to the strongest ever seen for that type
-for(int j=0; j<NumTypes-1; j++) {
-    if (OutProfile[j] <= Strongest[k][j])  //completely consistent with evidence, do nothing
-	continue;
-    if (Strongest[k][j] == 0) // never seen this before
-	rslt *= pow(0.1, OutProfile[j]);  // the stronger the profile, the less likely this could be
-    else {                     // we have seen a connection before, but this one is stronger
-        double ratio = double(OutProfile[j])/Strongest[k][j];
-        rslt *= exp(-ratio);   // the bigger the ratio, the less likely
-        }
-    }
-// do the same for inputs
-for(int j=0; j<NumTypes-1; j++) {
-    if (InProfile[j] <= Strongest[j][k])  //completely consistent with evidence, do nothing
-	continue;
-    if (Strongest[j][k] == 0) // never seen this before
-	rslt *= pow(0.1, InProfile[j]);  // the stronger the profile, the less likely this could be
-    else {                     // we have seen a connection before, but this one is stronger
-        double ratio = double(InProfile[j])/Strongest[j][k];
-        rslt *= exp(-ratio);   // the bigger the ratio, the less likely
-        }
-    }
-return rslt;
-}
 
-// Adds to a strength histogram.  Axis is log, but area added is proportional to strength
-void AddToStrengthHisto(vector<double> &histo, double str)
-{
-// calculate log, base 1.2
-double lb12 = log(str)/log(1.2);
-// find the int below
-double f = floor(lb12);
-double alpha = lb12 - f;
-int n = int(f);
-if (n < 0 || n >= histo.size()-1) {
-    printf("very odd in histo %d\n", n);
-    exit(42);
-    }
-// use of alpha made graph smoother, but more confusing
-//histo[n]   += (1.0-alpha) * str;
-//histo[n+1] += (    alpha) * str;
-
-histo[n] += str;
-}
-
-// finds the most common value in an array using a very stupid algorithm.
-int FindMode(vector<int> &a, int *HowMany = NULL) {
-int mode = 0;
-int how_many = 0;
-for(int i=0; i<a.size(); i++) {
-    // how many equal to entry [i]?
-    int N = 0;
-    for(int j=0; j<a.size(); j++)
-        N += int(a[j] == a[i]);
-    if (N > how_many) {
-	how_many = N;
-        mode = a[i];
-	}
-    }
-if (HowMany != NULL)         // return how many had the mode, if wanted
-    *HowMany = how_many;
-return mode;
-}
-
-void LookForMissing(vector<vector<unsigned char> > &from_to, vector<char *>& names, map<int,int> &rev_map,
- int from, int to, double asnze)
-{
-// first make sure the cells exist.  One source of a non-existing connection can be a missing cell.
-if (from < 0 || to < 0)
-    return;
-fprintf(logfile, "MISSING connection between %s and %s, strength %.2f\n", names[from], names[to], asnze);
-// First look for an unnamed fragment that is pre-synaptic to 'to'.  We will see if any of these are adjacent to 'from'.
-int body_id_from = rev_map[from];
-int body_id_to   = rev_map[  to];
-fprintf(logfile, "{\"Id1\":%d,\"Names\":\"%s-a-(?)->%s\", \"Id2\":[", body_id_from, names[from], names[to]);
-bool first = true;
-for(int k=0; k<names.size(); k++) {
-    if (from_to[k][to] > 0 && isdigit(names[k][0]) ){
-        fprintf(logfile, "%c%d", first? ' ' : ',', rev_map[k]);
-        first = false;
-        }
-    }
-fprintf(logfile, "]}\n");
-
-// now look for fragments post-synaptic to 'from'.
-fprintf(logfile, "{\"Id1\":%d,\"Names\":\"%s->()-a-%s\", \"Id2\":[", body_id_to, names[from], names[to]);
-first = true;
-for(int k=0; k<names.size(); k++) {
-    if (from_to[from][k] > 0 && isdigit(names[k][0]) ){
-        fprintf(logfile, "%c%d", first? ' ' : ',', rev_map[k]);
-        first = false;
-        }
-    }
-fprintf(logfile, "]}\n");
-}
-
-double sqr(double s){ return s*s;}
-
-// Process and write a file for synapse overlaps.  If M > 0, it's for a specific medulla layer.  If M < 0, it's
-// for all layers.
-void ProcessSynOverlaps(const char *from, const char *to, double *synapse, double *overlap, FILE *overview, int m)
-{
-char filename[256];
-if (m > 0)
-    sprintf(filename, "scatter%d/%s-%s", m,  from, to);
-else
-    sprintf(filename, "scatter/%s-%s", from, to);
-FILE *fp = fopen(filename, "w");
-if (fp == NULL) {
-    printf("Could not %s for write\n", filename);
-    exit(42);
-    }
-MeanStd s,o;
-MeanStd d;  // density
-for(int i=0; i<7; i++) {
-    fprintf(fp, "%.2f %.2f\n", overlap[i], synapse[i]);
-    s.Element(synapse[i]);
-    o.Element(overlap[i]);
-    if (overlap[i] > 0)
-        d.Element(synapse[i]/overlap[i]);
-    }
-fprintf(fp, "\n");
-fclose(fp);
-
-// calculate the coefficent of correlation, r, between area and synapse count.
-double sum1 = 0.0;
-double vs = 0.0, va = 0.0;
-for(int i=0; i<7; i++) {
-    sum1 += (synapse[i]-s.Mean()) * (overlap[i] - o.Mean());
-    vs   += sqr(synapse[i] - s.Mean());
-    va   += sqr(overlap[i] - o.Mean());
-    }
-double r;
-if (va > 0 && vs > 0)
-    r = sum1/sqrt(vs)/sqrt(va);
-else {
-    printf("One coord had no variance? %f %f %s %s\n", va, vs, from, to);
-    r = 0.0;
-    }
-
-double density = (d.HowMany() > 0) ? d.Mean() : 1.0;
-fprintf(overview, "%.2f %.2f %.2f %.3f \"%s-%s\" %.3f \n", o.Mean(), s.Mean(), s.Std(), density, from, to, r);
-
-// Find best fit to synapse count as a function of area
-vector<double> area(7), syn(7);
-double min_area =  1e30;
-double max_area = -1e30;
-for(int i=0; i<7; i++) {
-    area[i] = overlap[i];
-    syn [i] = synapse[i];
-    min_area = min(min_area, area[i]);
-    max_area = max(max_area, area[i]);
-    }
-Fitab fit(area, syn);
-fprintf(logfile, "  %s fit %s, layer %d: Syn as a function of area %f %f\n", from, to, m, fit.a, fit.b);
-double y = fit.a +fit.b * min_area;
-fprintf(logfile, "%.3f %.3f \"\"\n", min_area, y);
-y =        fit.a +fit.b * max_area;
-fprintf(logfile, "%.3f %.3f \"%s-%s\"\n\n", max_area, y, from, to);
-}
 
 // See if there is some combination of two vectors that has less variance than either alone.
 double LookForBetter(int i, int j, vector<double> &v1, vector<double> &v2, vector<const char *> &names, 
@@ -1367,186 +1137,9 @@ class tail {
     void add(double d) { if (d < 1.0){ int i = int(d*10.0); dat[i]++;};}
     };
 
-// Look for correlations between the columns
-void SearchForCorrelation(vector<vector<double> > dd, int Nrac, vector<const char *> &all_col_names, char op, const char *fname)
-{
 
-vector<sort_down> better;
 
-// With so many possibilities, we are sure to get some false positives.
-//So make a fake version for testing the null hypothesis.
-//Actually, make 100, or 10000, versions, and keep track of their mean and standard deviation.
-//We can use this to see how unlikely any real results could be
-vector<int> envelope(101,0);
-vector< vector< MeanStd> > FakeStats(Nrac*Nrac, vector< MeanStd>(Nrac*Nrac) );
-vector< vector< tail> >    FakeTails(Nrac*Nrac, vector<    tail>(Nrac*Nrac) );
-MeanStd StatsOfFake;
-MeanStd FakeSameCell;
-MeanStd FakeReciprocal;
-for(int trial=0; trial<100; trial++) {   // Use 10000 for real resultss
-    vector<vector<double> > save_dd = dd;
-    for(int i=0; i<Nrac*Nrac; i++) {
-	// replace each row with random numbers with same mean and std deviation.
-	MeanStd m;
-	for(int k=0; k<7; k++)
-	    m.Element(dd[i][k]);
-	NormalDev norm(m.Mean(), m.Std(), trial * 1000000 + i /* random seed */);
-	if (m.Sum() > 1) {
-	    double rnd = 0.5;
-	    for(int k=0; k<7; k++)
-		dd[i][k] = int(max(norm.dev(), 0.0) + rnd); // negative numbers cause chaos.  Delete them even if theoretically dubious.
-	    }
-	}
-    better.clear();
-    vector<int>ratio_hist2(101,0);
-    int Nsamecell = 0;
-    int Nrecip   = 0;
-    for(int j=0; j<Nrac*Nrac; j++)
-	for(int k=0; k<Nrac*Nrac; k++)
-	    if (j != k) {
-		double amt = LookForBetter(j, k, dd[j], dd[k], all_col_names, better, op, 1 /* pass 1, just record */);
-		int f1 = (j/Nrac); // from and to of both
-		int t1 = (j%Nrac);
-		int f2 = (k/Nrac);
-		int t2 = (k%Nrac);
-		bool recip = (f1 == t2 && f2 == t1);
-		bool same_cell = (f1 == t2 || f1 == f2 || t1 == f2 || t1 == t2);
-		if (amt < 1.0 && recip)
-		    Nrecip++;
-		if (amt < 1.0 && same_cell)
-		    Nsamecell++;
-                if (amt != 100.0) {
-                    FakeStats[j][k].Element(amt);
-                    FakeTails[j][k].add(amt);     // add to histogram
-		    }
-		}
-    fprintf(logfile, "Null hypothesis (fake data, all pairs) gives %d results with score < 1.\n", better.size() );
-    StatsOfFake.Element(better.size());
-    FakeSameCell.Element(Nsamecell);
-    FakeReciprocal.Element(Nrecip);
-    for(int i=better.size()-1; i>=0; i--)
-	ratio_hist2[int(100.0*better[i].val)]++;
-    for(int i=0; i<=100; i++)
-	envelope[i] = max(envelope[i], ratio_hist2[i]);
-    dd = save_dd;
-    }
-fprintf(logfile, "From %d fake example, on average %.3f (std %.3f) has scores of less than 1.\n", StatsOfFake.HowMany(), StatsOfFake.Mean(), StatsOfFake.Std() );
-fprintf(logfile, "From %d fake example, on average %.3f (std %.3f) involved a common cell.\n", FakeSameCell.HowMany(), FakeSameCell.Mean(), FakeSameCell.Std() );
-fprintf(logfile, "From %d fake example, on average %.3f (std %.3f) were reciprocal.\n", FakeReciprocal.HowMany(), FakeReciprocal.Mean(), FakeReciprocal.Std() );
-// Now that we have some idea what to expect, try real data.
-better.clear();
-MeanStd all_pairs, recip_pairs, same_cell_pairs;
-for(int j=0; j<Nrac*Nrac; j++)
-    for(int k=0; k<Nrac*Nrac; k++)
-	if ((op == '+') ? k<j : k != j ) {  // op '+' needs only k,j since j,k will be identical; op '/' needs all k!=j
-	    double amt = LookForBetter(j, k, dd[j], dd[k], all_col_names, better, op, 1 /* pass 1 */, true /* print recip */);
-            int f1 = (j/Nrac); // from and to of both
-            int t1 = (j%Nrac);
-            int f2 = (k/Nrac);
-            int t2 = (k%Nrac);
-            bool recip = (f1 == t2 && f2 == t1);
-            bool same_cell = (f1 == t2 || f1 == f2 || t1 == f2 || t1 == t2);
-            if (amt < 100 && recip)
-		recip_pairs.Element(amt);
-            if (amt < 100 && same_cell)
-		same_cell_pairs.Element(amt);
-            if (amt < 100)
-		all_pairs.Element(amt);
-	    }
-fprintf(logfile, "Average over all %d pairs is %.3f, over %d same cell pairs %.3f, over %d reciprocal pairs is %.3f\n", 
- all_pairs.HowMany(), all_pairs.Mean(), same_cell_pairs.HowMany(), same_cell_pairs.Mean(), recip_pairs.HowMany(), recip_pairs.Mean() );
-// Replay list, this time sorted by metric
-sort(better.begin(), better.end());
-fprintf(logfile, "------------------- Replay list, %d now sorted ------------------------\n", better.size());
-vector<int>ratio_hist1(101,0);
-for(int i=better.size()-1; i>=0; i--) {
-    fprintf(logfile, "Expecting %.3f\n", better[i].val);
-    int j = better[i].index;
-    int k = better[i].index2;
-    ratio_hist1[int(100.0*better[i].val)]++;
-    double amt = LookForBetter(j, k , dd[j], dd[k], all_col_names, better,  op, 2 /* pass 2 */);
-    double me = FakeStats[j][k].Mean();
-    double st = FakeStats[j][k].Std();
-    double z;  // number of stds out
-    if (abs(st) < 1e-8) {
-	fprintf(logfile, "Std too small %f (mean %.3f N=%d\n", st, me, FakeStats[j][k].HowMany());
-        z = 1.0;
-	}
-    else
-        z = (me - amt)/st;
-    int N = FakeStats[j][k].HowMany();
-    const char *flag =  (N >= 90 && abs(z) >= 3.0) ? "###" : "";
-    fprintf(logfile, "  Bing! entry %.3f is %.2f standard deviations (each %.3f) from mean %.3f of %d samples %s\n", amt, z, st, me, N, flag);
-    double cumul = 0.0;
-    for(int m=0; m<10; m++) {
-	fprintf(logfile, "%5d", FakeTails[j][k].dat[m]);
-        double bin_bot =  m   *0.1;
-        double bin_top = (m+1)*0.1;
-        if (bin_top < amt)
-	   cumul += FakeTails[j][k].dat[m];
-        if (bin_bot <= amt && amt <= bin_top)
-	   cumul += (amt - bin_bot) * 10.0 * FakeTails[j][k].dat[m];
-	}
-    fprintf(logfile, " :  Cumulative %.2f\n", cumul);
-    }
 
-FILE *fp = fopen(fname, "w");
-if (fp == NULL) {
-    printf("Could not open '%s' for write\n", fname);
-    exit(42);
-    }
-for(int i=0; i<=100; i++) {
-     printf(    "%4d %6d %4d\n", i, ratio_hist1[i], envelope[i]);
-    fprintf(fp, "%4d %6d %4d\n", i, ratio_hist1[i], envelope[i]);
-    }
-fclose(fp);
-}
-
-// Routine for fitting a plane.  Styled after NR example.
-VecDoub Plane2D(VecDoub_I &xx) {
-VecDoub ans(3);
-double x = xx[0];
-double y = xx[1];
-ans[0] = 1;
-ans[1] = x;
-ans[2] = y;
-return ans;
-}
-
-// Tells if point c is on the left side of the vector a->b by using the cross product
-bool LeftSide(const Point &a, const Point &b, const Point &c)
-{
-return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x) > 0;
-}
-
-bool LinesCross(const Point &p1, const Point &p2, const Point &p3, const Point &p4, Point *rslt = NULL)
-{
-double a = p2.x - p1.x;
-double b = p3.x - p4.x;
-double c = p2.y - p1.y;
-double d = p3.y - p4.y;
-double det = a*d - b*c;
-
-double e = p3.x - p1.x;
-double f = p3.y - p1.y;
-double alpha = double(d*e - b*f) / double(det);
-double beta = double((-c)*e + a*f) / double(det);
-bool cross = 0.0 < alpha && alpha < 1.0 && 0.0 < beta && beta < 1.0;
-if (cross) {
-    fprintf(logfile, "Aha!  got crossing (%f %f) to (%f %f) crosses (%f %f) to (%f %f), alpha=%f beta=%f\n",
-     p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, alpha, beta);
-    double ax = alpha*p2.x + (1-alpha)*p1.x;
-    double ay = alpha*p2.y + (1-alpha)*p1.y;
-    double bx =  beta*p4.x + (1-beta) *p3.x;
-    double by =  beta*p4.y + (1-beta) *p3.y;
-    fprintf(logfile, "Intersect (%f %f) and (%f %f)\n", ax, ay, bx, by);
-    if (rslt != NULL) {
-        rslt->x = ax;
-        rslt->y = ay;
-	}
-    }
-return cross;
-}
 
 // Go through all the tbars, looking for precursor cells.
 // // ty = type of T4 cell.  May be "fb" (front-back) or "bf" or "ud (up-down) or "du".
@@ -1678,22 +1271,6 @@ for(int i=0; i<NumTypes-1; i++) {
     }
 }
 
-void PerpBisect(double x1, double y1, double x2, double y2)
-{
-double slope = (y2-y1)/(x2-x1);
-double bis   = -1.0/slope;
-double midx = (x1+x2)/2.0;
-double midy = (y1+y2)/2.0;
-double len = abs(bis) > 2 ? 150.0 : 500;
-// find the x span of a line of length 'len'.
-double xspan = sqrt(len*len/(1.0+bis*bis));
-double r1x = midx - xspan/2;
-double r1y = midy - (xspan/2)*bis;
-double r2x = midx + xspan/2;
-double r2y = midy + (xspan/2)*bis;
-fprintf(logfile, "%.1f %.1f\n%.1f %.1f\n\n", r1x, r1y, r2x, r2y);
-
-}
 
 // Trace back inputs starting with Body ID 'root'.
 // Connectivity matrix is 'from_to'.
@@ -1736,13 +1313,6 @@ for(int hops=0; look_at.size() > 0; look_at = more) {
 	}
     }
 fprintf(logfile, "------------------------ End of Circuit --------------------------\n");
-}
-VecDoub FitALinear(const Doub x) {
-VecDoub ans(2);
-ans[0] = 1.0;
-for(int i=1; i<2; i++)
-    ans[i] = ans[i-1] * x;
-return ans;
 }
 
 // Compute distance between partners

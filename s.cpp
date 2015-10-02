@@ -191,8 +191,15 @@ vector<NeuroTr> NeuroTransmitters;
 
 // First column is cell type, second is color, third is index in Single-column paper, if defined.
 CellType CellTypes[] = {
- CellType("PPL",   87, true, 17),
- CellType("MBON",  95, true,  5),
+ CellType("PPL1-05",   87, true, 17),
+ CellType("PPL1-06",   85, true, 17),
+ CellType("MBON-06",  95, true,  5),
+ CellType("MBON-07",  97, true,  5),
+ CellType("MBON-11",  99, true,  5),
+ CellType("MBON-14",  93, true,  5),
+ CellType("MBON-18",  91, true,  5),
+ CellType("MBON-19",  89, true,  5),
+ CellType("MBON-X",   90, true,  5),
  CellType("KC-prime",  70    ),  // Added
  CellType("KC-c",   71, true, 21),
  CellType("KC-p",   72, true,  9),
@@ -201,7 +208,7 @@ CellType CellTypes[] = {
  CellType("Other",   55, true,  6),   // Added
  CellType("Irr",     6, true, 13),
  CellType("alpha",   24, true    ),   // columnar, but not in old
- CellType("medium",  11, true,  2),
+ CellType("non",  11, true,  2),
  CellType("Mi11",  83    ),  // Added
  CellType("Mi13",   9    ),
  CellType("Mi14",  10    ),
@@ -1140,6 +1147,37 @@ if (HowMany != NULL)         // return how many had the mode, if wanted
 return mode;
 }
 
+void LookForMissing(vector<vector<unsigned char> > &from_to, vector<char *>& names, map<int,int> &rev_map,
+ int from, int to, double asnze)
+{
+// first make sure the cells exist.  One source of a non-existing connection can be a missing cell.
+if (from < 0 || to < 0)
+    return;
+fprintf(logfile, "MISSING connection between %s and %s, strength %.2f\n", names[from], names[to], asnze);
+// First look for an unnamed fragment that is pre-synaptic to 'to'.  We will see if any of these are adjacent to 'from'.
+int body_id_from = rev_map[from];
+int body_id_to   = rev_map[  to];
+fprintf(logfile, "{\"Id1\":%d,\"Names\":\"%s-a-(?)->%s\", \"Id2\":[", body_id_from, names[from], names[to]);
+bool first = true;
+for(int k=0; k<names.size(); k++) {
+    if (from_to[k][to] > 0 && isdigit(names[k][0]) ){
+        fprintf(logfile, "%c%d", first? ' ' : ',', rev_map[k]);
+        first = false;
+        }
+    }
+fprintf(logfile, "]}\n");
+
+// now look for fragments post-synaptic to 'from'.
+fprintf(logfile, "{\"Id1\":%d,\"Names\":\"%s->()-a-%s\", \"Id2\":[", body_id_to, names[from], names[to]);
+first = true;
+for(int k=0; k<names.size(); k++) {
+    if (from_to[from][k] > 0 && isdigit(names[k][0]) ){
+        fprintf(logfile, "%c%d", first? ' ' : ',', rev_map[k]);
+        first = false;
+        }
+    }
+fprintf(logfile, "]}\n");
+}
 
 double sqr(double s){ return s*s;}
 
@@ -1662,7 +1700,7 @@ fprintf(logfile, "%.1f %.1f\n%.1f %.1f\n\n", r1x, r1y, r2x, r2y);
 // 'wanted' is the cell types you want to trace.
 // 'trace' is false for those cells you do not want to trace back from (typically inputs)
 void CircuitBacktrace(
- int root, vector<vector<unsigned char> > &from_to, vector<char *> &names, vector<bool> wanted, vector<bool> trace, int threshold)
+ int root, vector<vector<unsigned short> > &from_to, vector<char *> &names, vector<bool> wanted, vector<bool> trace, int threshold)
 {
 fprintf(logfile, "Michael:\n");
 vector<bool> cell_used(names.size(), false);  // to avoid loops
@@ -1772,7 +1810,7 @@ return rslt;
 }
 
 void FindCommonInputs(const char *name, vector<int> &KCs, vector<char *>&names, 
- vector<vector<unsigned char> > &from_to, map<int, int> &rev_map) {
+ vector<vector<unsigned short> > &from_to, map<int, int> &rev_map) {
 vector<int> outs;
 for(int i=0; i<names.size(); i++)
     if (strncmp(names[i],name,strlen(name)) == 0) {
@@ -2076,7 +2114,7 @@ else {
 //-------------------------  Read the synapse JSON file -------------------------------------------
 // create a giant from-to matrix, with weights.
 int M = names.size();
-vector< vector<unsigned char> > from_to(M, vector<unsigned char>(M,0));
+vector< vector<unsigned short> > from_to(M, vector<unsigned short>(M,0));
 vector<int> mentioned(M,0);  // how often is each ID mentioned, either as a source or a target?
 // Go through all the T-bars
 //vector<TBar> tbs;
@@ -2610,6 +2648,20 @@ fprintf(logfile, "Read %d Tbars\n", tbs.size());
 //MapXYs(tbs, 571372, "du", name_map, names);
 //MapXYs(tbs, 597861, "fb", name_map, names);
 //MapXYs(tbs, 598856, "ud", name_map, names);
+// Look for some particular synapses
+{
+int pre = 150525;
+int post=  54977;
+for(int i=0; i<tbs.size(); i++) {
+    if (tbs[i].body_id != pre)
+        continue;
+    for(int j=0; j<tbs[i].partners.size(); j++) {
+        if (tbs[i].partners[j].body_id == post)
+            fprintf(logfile, "TRACE %d %d %d\n", int(tbs[i].partners[j].pt.x), int(tbs[i].partners[j].pt.y), tbs[i].partners[j].z);
+        }
+    }
+}
+
 // OK, create the set to average the location of each chunk.   This is the only use of the tsb vector, so this could
 // be done in the above loop.  Also, since we now create 'ss' we could get rid of the huge matrix.
 // Also, create a matrix of which cell types have synapses in each layer.

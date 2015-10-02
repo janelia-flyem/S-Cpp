@@ -20,6 +20,9 @@ using namespace std;
 #include "svd.h"
 #include "fitsvd.h"
 
+
+FILE * logfile;
+
 class overlap {
   public:
     int id1, id2;
@@ -405,7 +408,7 @@ for(int i=1; i<=10; i++) {
 	}
     }
 if (N == 0) {
-    //LOG printf("Nothing in table with from=%d and to=%d\n", from, to);
+    printf("Nothing in table with from=%d and to=%d\n", from, to);
     exit(42);
     }
 return double(zsum)/N/100.0;  // return value in microns
@@ -503,7 +506,7 @@ for(char *p = fname; *p != '\0'; p++) {
     }
 fp = fopen(fname,"w");
 if (fp == NULL) {
-    //LOG printf("could not open %s for write\n", fname);
+    printf("could not open %s for write\n", fname);
     exit(42);
     }
 
@@ -566,9 +569,6 @@ fprintf(fp, "<TD> Cell type ");
 for(int k=0; k<print_width; k++)
     fprintf(fp, "<TD> #%d ", k+1);
 fprintf(fp, "<TD>Conn shown/total<TD>T-bars<TD>Volume<TD> Area</TD></TR>\n");
-printf("AAAA\n\n");
-printf("%s\n", bname);
-printf("%d\n", row_ids.size());
 for(int i=0; i<row_ids.size(); i++) {
 
     // we'll use a light yellow for almost complete cells, a light green for complete, white for incomplete
@@ -627,7 +627,7 @@ for(int i=0; i<row_ids.size(); i++) {
 		s.push_back(it);
 	    }
 	}
-    //LOG printf("Expansion is %d to %d\n", rows[i].size(), s.size() );
+    fprintf(logfile, "Expansion is %d to %d\n", rows[i].size(), s.size() );
     sz.push_back(s);
     }
 // At this point, all the entries s[i][*] will have the same from (if doing outputs) or the same 'to'.
@@ -671,7 +671,7 @@ for(int i=0; i<row_ids.size(); i++) {
         }
     }
 // approximately align each table
-double margin = strcmp(bname, "Mi1") == 0 ? 1.6 : 1.0;  // use a bigger value for Mi1 to avoid end of table
+double margin =  1.0;  // use a bigger value for Mi1 to avoid end of table
 for(int i=0; i<1000; i++) {
     // for column i, find the number of elements and the smallest z
     int num = 0;
@@ -683,7 +683,7 @@ for(int i=0; i<1000; i++) {
 	    }
 	}
     if (num < 2) break;
-    //LOG printf("Column %d, %d are used, smallest %.2f\n", i, num, smallz);
+    fprintf(logfile, "Column %d, %d are used, smallest %.2f\n", i, num, smallz);
     // now, for every one that exists, and is more than smallz+margin, bump it over.
     for(int j=0; j<row_ids.size(); j++) {
 	if (sz[j].size() > i) { // data exists
@@ -802,19 +802,6 @@ else {
         CellStats[CellStats.size()-1].out_dev = 0.0;
     }
 
-// Now for a table of cross-column connections.
-int summary[] = {
-// U  H  a  b  c  d  e  f
-   0, 0, 0, 0, 0, 0, 0, 0,  // U
-   0, 0, 1, 2, 3, 4, 5, 6,  // H
-   0, 4, 0, 3, 0, 0, 0, 5,  // a
-   0, 5, 6, 0, 4, 0, 0, 0,  // b
-   0, 6, 0, 1, 0, 5, 0, 0,  // c
-   0, 1, 0, 0, 2, 0, 6, 0,  // d
-   0, 2, 0, 0, 0, 3, 0, 1,  // e
-   0, 3, 2, 0, 0, 0, 4, 0   // f
-   };
-
 
 //-------------------------------------- Now write the table of ALL connections, not just those in table
 total = 0;                          // Now re-do total to include all
@@ -823,7 +810,7 @@ for(int i=0; i<NumTypes; i++) {
         double mean, std;
         stats[i].Stats(mean, std);
         total += int(stats[i].HowMany() * mean + 0.5);  // should be int, but round...
-        //LOG printf(" Stats %d, %f\n", stats[i].HowMany(), mean);
+        fprintf(logfile, " Stats %d, %f\n", stats[i].HowMany(), mean);
 	}
     }
 vector<sort_down> sa(NumTypes);
@@ -835,10 +822,10 @@ for(int i=0; i<NumTypes; i++) {
         sa[i].val = 1.0;  // don't care how these sort, since they are not printed, but must be well defined.
     }
 for(int i=0; i<NumTypes; i++)
-    //LOG printf("sa[%d] %s %s %d %f\n", i, bname, suffix, sa[i].index, sa[i].val);
+    fprintf(logfile, "sa[%d] %s %s %d %f\n", i, bname, suffix, sa[i].index, sa[i].val);
 sort(sa.begin(), sa.end()-1);
 for(int i=0; i<NumTypes; i++)
-    //LOG printf("sa[%d] %s %s %d %f\n", i, bname, suffix, sa[i].index, sa[i].val);
+    fprintf(logfile, "sa[%d] %s %s %d %f\n", i, bname, suffix, sa[i].index, sa[i].val);
 fprintf(fp,"<p>\n");
 fprintf(fp, "<TABLE BORDER=4 CELLSPACING=4 CELLPADDING=4>\n");
 char list[128], title[256];
@@ -952,7 +939,7 @@ for(int i=0; i<NumTypes; i++) {
 // write data for Kenyon Cell histograms here
 FILE *fkc = fopen("KCdata.txt", "a");
 if (fkc == NULL) {
-    //LOG printf("Could not open KCdata.txt\n");
+    printf("Could not open KCdata.txt\n");
     exit(42);
     }
 fprintf(fp, "</TD></TR>\n");
@@ -985,10 +972,10 @@ fprintf(fp, "</body>\n");
 fprintf(fp, "</html>\n");
 fclose(fp);
 
-//LOG printf("RF: ------------------ %s ------------------\n", names[row_ids[0]] );
+fprintf(logfile, "RF: ------------------ %s ------------------\n", names[row_ids[0]] );
 // Using the previous table, write a set of commands for computing receptive fields
 for(int i=0; i<row_ids.size(); i++) {
-    //LOG printf("AVG %s", NoSpace(names[row_ids[i]]));
+    fprintf(logfile, "AVG %s", NoSpace(names[row_ids[i]]));
     // Now for the 5 most numerous input types, print contribution
     for(int k=0; k<5; k++) {
 	int ty_look_for = any[k].index;
@@ -998,20 +985,20 @@ for(int i=0; i<row_ids.size(); i++) {
             if (ty == ty_look_for)
 		sum += dat[i][j];
 	    }
-	//LOG printf(" %d %s-from-%s", sum, NoSpace(names[row_ids[i]]), CellTypes[ty_look_for].name);
+	fprintf(logfile, " %d %s-from-%s", sum, NoSpace(names[row_ids[i]]), CellTypes[ty_look_for].name);
 	}
-    //LOG printf("\n");
+    fprintf(logfile, "\n");
     // now figure out how each of them got here
     for(int k=0; k<5; k++) {
 	int ty_look_for = any[k].index;
-        //LOG printf(" AVG %s-from-%s", NoSpace(names[row_ids[i]]), CellTypes[ty_look_for].name);
+        fprintf(logfile, " AVG %s-from-%s", NoSpace(names[row_ids[i]]), CellTypes[ty_look_for].name);
         for(int j=0; j < rows[i].size(); j++) {
 	    int ty = TypeIndex(names[rows[i][j]]);
             if (ty == ty_look_for){
-		//LOG printf(" %d %s", dat[i][j], NoSpace(names[rows[i][j]]) );
+		fprintf(logfile, " %d %s", dat[i][j], NoSpace(names[rows[i][j]]) );
             }
 	    }
-	//LOG printf("\n");
+	fprintf(logfile, "\n");
 	}
     }
 
@@ -1032,8 +1019,8 @@ for(int i=0; i<row_ids.size(); i++) {
 			got = true;
 		    }
 		if (!got) {
-		    //LOG printf("### Very odd.  %d synapses, Cell %s %s %s, but nothing in complete cell %s\n",
-		    //LOG dat[i][j], names[row_ids[i]], input ? "inputs from" : "outputs to", names[rows[i][j]], names[row_ids[ii]] );
+		    printf("### Very odd.  %d synapses, Cell %s %s %s, but nothing in complete cell %s\n",
+		    dat[i][j], names[row_ids[i]], input ? "inputs from" : "outputs to", names[rows[i][j]], names[row_ids[ii]] );
 		    }
 		}
 	    }
@@ -1068,7 +1055,7 @@ return rslt;
 
 double Inner(vector<double> &a, vector<double> &b) {
 if (a.size() != b.size() ){
-    //LOG printf("Bogus sizes\n");
+    printf("Bogus sizes\n");
     exit(42);
     }
 double aa = 0.0, bb = 0.0, ab = 0.0;
@@ -1124,7 +1111,7 @@ double f = floor(lb12);
 double alpha = lb12 - f;
 int n = int(f);
 if (n < 0 || n >= histo.size()-1) {
-    //LOG printf("very odd in histo %d\n", n);
+    printf("very odd in histo %d\n", n);
     exit(42);
     }
 // use of alpha made graph smoother, but more confusing
@@ -1153,37 +1140,6 @@ if (HowMany != NULL)         // return how many had the mode, if wanted
 return mode;
 }
 
-void LookForMissing(vector<vector<unsigned char> > &from_to, vector<char *>& names, map<int,int> &rev_map,
- int from, int to, double asnze)
-{
-// first make sure the cells exist.  One source of a non-existing connection can be a missing cell.
-if (from < 0 || to < 0)
-    return;
-//LOG printf("MISSING connection between %s and %s, strength %.2f\n", names[from], names[to], asnze);
-// First look for an unnamed fragment that is pre-synaptic to 'to'.  We will see if any of these are adjacent to 'from'.
-int body_id_from = rev_map[from];
-int body_id_to   = rev_map[  to];
-//LOG printf("{\"Id1\":%d,\"Names\":\"%s-a-(?)->%s\", \"Id2\":[", body_id_from, names[from], names[to]);
-bool first = true;
-for(int k=0; k<names.size(); k++) {
-    if (from_to[k][to] > 0 && isdigit(names[k][0]) ){
-	//LOG printf("%c%d", first? ' ' : ',', rev_map[k]);
-        first = false;
-	}
-    }
-//LOG printf("]}\n");
-
-// now look for fragments post-synaptic to 'from'.
-//LOG printf("{\"Id1\":%d,\"Names\":\"%s->()-a-%s\", \"Id2\":[", body_id_to, names[from], names[to]);
-first = true;
-for(int k=0; k<names.size(); k++) {
-    if (from_to[from][k] > 0 && isdigit(names[k][0]) ){
-	//LOG printf("%c%d", first? ' ' : ',', rev_map[k]);
-        first = false;
-	}
-    }
-//LOG printf("]}\n");
-}
 
 double sqr(double s){ return s*s;}
 
@@ -1198,7 +1154,7 @@ else
     sprintf(filename, "scatter/%s-%s", from, to);
 FILE *fp = fopen(filename, "w");
 if (fp == NULL) {
-    //LOG printf("Could not %s for write\n", filename);
+    printf("Could not %s for write\n", filename);
     exit(42);
     }
 MeanStd s,o;
@@ -1225,7 +1181,7 @@ double r;
 if (va > 0 && vs > 0)
     r = sum1/sqrt(vs)/sqrt(va);
 else {
-    //LOG printf("One coord had no variance? %f %f %s %s\n", va, vs, from, to);
+    printf("One coord had no variance? %f %f %s %s\n", va, vs, from, to);
     r = 0.0;
     }
 
@@ -1243,11 +1199,11 @@ for(int i=0; i<7; i++) {
     max_area = max(max_area, area[i]);
     }
 Fitab fit(area, syn);
-//LOG printf("  %s fit %s, layer %d: Syn as a function of area %f %f\n", from, to, m, fit.a, fit.b);
+fprintf(logfile, "  %s fit %s, layer %d: Syn as a function of area %f %f\n", from, to, m, fit.a, fit.b);
 double y = fit.a +fit.b * min_area;
-//LOG printf("%.3f %.3f \"\"\n", min_area, y);
+fprintf(logfile, "%.3f %.3f \"\"\n", min_area, y);
 y =        fit.a +fit.b * max_area;
-//LOG printf("%.3f %.3f \"%s-%s\"\n\n", max_area, y, from, to);
+fprintf(logfile, "%.3f %.3f \"%s-%s\"\n\n", max_area, y, from, to);
 }
 
 // See if there is some combination of two vectors that has less variance than either alone.
@@ -1277,8 +1233,8 @@ for(int k=0; k<7; k++) {
     cd2 += d2*d2;
     }
 double corr = (abs(cd1*cd2) <1e-6) ? 0.0 : cn/sqrt(cd1*cd2);  // in case get all the same integer in
-if (pass == 2) {}
-    //LOG printf("Correlation is %.4f\n", corr);
+if (pass == 2) 
+    fprintf(logfile, "Correlation is %.4f\n", corr);
 double fm1 = mv1.Std()/mv1.Mean();
 double fm2 = mv2.Std()/mv2.Mean();
 if (nz1 == 7 && nz2 == 7) {   // try the ratio
@@ -1291,7 +1247,7 @@ if (nz1 == 7 && nz2 == 7) {   // try the ratio
         else if (op == '/')
 	    r = v1[k] / v2[k];
         else {
-	    //LOG printf("Bad operator '%c'\n", op);
+	    printf("Bad operator '%c'\n", op);
 	    exit(42);
 	    }
 	m.Element(r);
@@ -1304,15 +1260,15 @@ if (nz1 == 7 && nz2 == 7) {   // try the ratio
     else
         amt = 100.0;  // for a bad result.
     if (print_recip && (i/N) == (j%N) && (i%N) == (j/N)) { // it's reciprocal.
-	//LOG printf("\nRecip: Operator %c compared to either for %s->%s / %s->%s by %.3f .  Corr=%.4f:\n", 
-         //LOG op, names[i/N], names[i%N], names[j/N], names[j%N], amt, corr);
+	fprintf(logfile, "\nRecip: Operator %c compared to either for %s->%s / %s->%s by %.3f .  Corr=%.4f:\n", 
+         op, names[i/N], names[i%N], names[j/N], names[j%N], amt, corr);
 	for(int k=0; k<7; k++) {
-	    //LOG printf("     %6.1f %c %6.1f  = %6.3f\n", v1[k], op, v2[k], ratios[k]);
+	    fprintf(logfile, "     %6.1f %c %6.1f  = %6.3f\n", v1[k], op, v2[k], ratios[k]);
         }
-        //LOG printf("     ------   ------    ------\n");
-	//LOG printf("mean %6.1f   %6.1f    %6.3f\n", mv1.Mean(), mv2.Mean(), m.Mean() );
-	//LOG printf(" std %6.2f   %6.2f    %6.3f\n", mv1.Std(),  mv2.Std(),  m.Std()  );
-	//LOG printf("norm %6.3f   %6.3f    %6.3f\n", fm1,        fm2,        fm       );
+        fprintf(logfile, "     ------   ------    ------\n");
+	fprintf(logfile, "mean %6.1f   %6.1f    %6.3f\n", mv1.Mean(), mv2.Mean(), m.Mean() );
+	fprintf(logfile, " std %6.2f   %6.2f    %6.3f\n", mv1.Std(),  mv2.Std(),  m.Std()  );
+	fprintf(logfile, "norm %6.3f   %6.3f    %6.3f\n", fm1,        fm2,        fm       );
         }
     // For trying direct correlation rather than our dev/min of input dev metric.
     // Will return 0 (perfectly correlated) to 20 (perfectly anti-correlated).
@@ -1324,9 +1280,9 @@ if (nz1 == 7 && nz2 == 7) {   // try the ratio
         if (pass == 1)   // in pass 1, record it
             rslts.push_back(sort_down(i,j,amt));
         else {           // in pass 2, write it out
-	    //LOG printf("Operator %c better than either for %s->%s / %s->%s by %.3f:\n", op, names[i/N], names[i%N], names[j/N], names[j%N], amt);
-	    for(int k=0; k<7; k++){}
-	        //LOG printf("%6.1f %6.1f %6.3f\n", v1[k], v2[k], ratios[k]);
+	    fprintf(logfile, "Operator %c better than either for %s->%s / %s->%s by %.3f:\n", op, names[i/N], names[i%N], names[j/N], names[j%N], amt);
+	    for(int k=0; k<7; k++)
+	        fprintf(logfile, "%6.1f %6.1f %6.3f\n", v1[k], v2[k], ratios[k]);
             }
 	}
     }
@@ -1426,7 +1382,7 @@ for(int trial=0; trial<100; trial++) {   // Use 10000 for real resultss
                     FakeTails[j][k].add(amt);     // add to histogram
 		    }
 		}
-    //LOG printf("Null hypothesis (fake data, all pairs) gives %d results with score < 1.\n", better.size() );
+    fprintf(logfile, "Null hypothesis (fake data, all pairs) gives %d results with score < 1.\n", better.size() );
     StatsOfFake.Element(better.size());
     FakeSameCell.Element(Nsamecell);
     FakeReciprocal.Element(Nrecip);
@@ -1436,9 +1392,9 @@ for(int trial=0; trial<100; trial++) {   // Use 10000 for real resultss
 	envelope[i] = max(envelope[i], ratio_hist2[i]);
     dd = save_dd;
     }
-//LOG printf("From %d fake example, on average %.3f (std %.3f) has scores of less than 1.\n", StatsOfFake.HowMany(), StatsOfFake.Mean(), StatsOfFake.Std() );
-//LOG printf("From %d fake example, on average %.3f (std %.3f) involved a common cell.\n", FakeSameCell.HowMany(), FakeSameCell.Mean(), FakeSameCell.Std() );
-//LOG printf("From %d fake example, on average %.3f (std %.3f) were reciprocal.\n", FakeReciprocal.HowMany(), FakeReciprocal.Mean(), FakeReciprocal.Std() );
+fprintf(logfile, "From %d fake example, on average %.3f (std %.3f) has scores of less than 1.\n", StatsOfFake.HowMany(), StatsOfFake.Mean(), StatsOfFake.Std() );
+fprintf(logfile, "From %d fake example, on average %.3f (std %.3f) involved a common cell.\n", FakeSameCell.HowMany(), FakeSameCell.Mean(), FakeSameCell.Std() );
+fprintf(logfile, "From %d fake example, on average %.3f (std %.3f) were reciprocal.\n", FakeReciprocal.HowMany(), FakeReciprocal.Mean(), FakeReciprocal.Std() );
 // Now that we have some idea what to expect, try real data.
 better.clear();
 MeanStd all_pairs, recip_pairs, same_cell_pairs;
@@ -1459,14 +1415,14 @@ for(int j=0; j<Nrac*Nrac; j++)
             if (amt < 100)
 		all_pairs.Element(amt);
 	    }
-//LOG printf("Average over all %d pairs is %.3f, over %d same cell pairs %.3f, over %d reciprocal pairs is %.3f\n", 
-//LOG  all_pairs.HowMany(), all_pairs.Mean(), same_cell_pairs.HowMany(), same_cell_pairs.Mean(), recip_pairs.HowMany(), recip_pairs.Mean() );
+fprintf(logfile, "Average over all %d pairs is %.3f, over %d same cell pairs %.3f, over %d reciprocal pairs is %.3f\n", 
+ all_pairs.HowMany(), all_pairs.Mean(), same_cell_pairs.HowMany(), same_cell_pairs.Mean(), recip_pairs.HowMany(), recip_pairs.Mean() );
 // Replay list, this time sorted by metric
 sort(better.begin(), better.end());
-//LOG printf("------------------- Replay list, %d now sorted ------------------------\n", better.size());
+fprintf(logfile, "------------------- Replay list, %d now sorted ------------------------\n", better.size());
 vector<int>ratio_hist1(101,0);
 for(int i=better.size()-1; i>=0; i--) {
-    //LOG printf("Expecting %.3f\n", better[i].val);
+    fprintf(logfile, "Expecting %.3f\n", better[i].val);
     int j = better[i].index;
     int k = better[i].index2;
     ratio_hist1[int(100.0*better[i].val)]++;
@@ -1475,17 +1431,17 @@ for(int i=better.size()-1; i>=0; i--) {
     double st = FakeStats[j][k].Std();
     double z;  // number of stds out
     if (abs(st) < 1e-8) {
-	//LOG printf("Std too small %f (mean %.3f N=%d\n", st, me, FakeStats[j][k].HowMany());
+	fprintf(logfile, "Std too small %f (mean %.3f N=%d\n", st, me, FakeStats[j][k].HowMany());
         z = 1.0;
 	}
     else
         z = (me - amt)/st;
     int N = FakeStats[j][k].HowMany();
     const char *flag =  (N >= 90 && abs(z) >= 3.0) ? "###" : "";
-    //LOG printf("  Bing! entry %.3f is %.2f standard deviations (each %.3f) from mean %.3f of %d samples %s\n", amt, z, st, me, N, flag);
+    fprintf(logfile, "  Bing! entry %.3f is %.2f standard deviations (each %.3f) from mean %.3f of %d samples %s\n", amt, z, st, me, N, flag);
     double cumul = 0.0;
     for(int m=0; m<10; m++) {
-	//LOG printf("%5d", FakeTails[j][k].dat[m]);
+	fprintf(logfile, "%5d", FakeTails[j][k].dat[m]);
         double bin_bot =  m   *0.1;
         double bin_top = (m+1)*0.1;
         if (bin_top < amt)
@@ -1493,12 +1449,12 @@ for(int i=better.size()-1; i>=0; i--) {
         if (bin_bot <= amt && amt <= bin_top)
 	   cumul += (amt - bin_bot) * 10.0 * FakeTails[j][k].dat[m];
 	}
-    //LOG printf(" :  Cumulative %.2f\n", cumul);
+    fprintf(logfile, " :  Cumulative %.2f\n", cumul);
     }
 
 FILE *fp = fopen(fname, "w");
 if (fp == NULL) {
-    //LOG printf("Could not open '%s' for write\n", fname);
+    printf("Could not open '%s' for write\n", fname);
     exit(42);
     }
 for(int i=0; i<=100; i++) {
@@ -1539,13 +1495,13 @@ double alpha = double(d*e - b*f) / double(det);
 double beta = double((-c)*e + a*f) / double(det);
 bool cross = 0.0 < alpha && alpha < 1.0 && 0.0 < beta && beta < 1.0;
 if (cross) {
-    //LOG printf("Aha!  got crossing (%f %f) to (%f %f) crosses (%f %f) to (%f %f), alpha=%f beta=%f\n",
-    //LOG  p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, alpha, beta);
+    fprintf(logfile, "Aha!  got crossing (%f %f) to (%f %f) crosses (%f %f) to (%f %f), alpha=%f beta=%f\n",
+     p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, alpha, beta);
     double ax = alpha*p2.x + (1-alpha)*p1.x;
     double ay = alpha*p2.y + (1-alpha)*p1.y;
     double bx =  beta*p4.x + (1-beta) *p3.x;
     double by =  beta*p4.y + (1-beta) *p3.y;
-    //LOG printf("Intersect (%f %f) and (%f %f)\n", ax, ay, bx, by);
+    fprintf(logfile, "Intersect (%f %f) and (%f %f)\n", ax, ay, bx, by);
     if (rslt != NULL) {
         rslt->x = ax;
         rslt->y = ay;
@@ -1565,8 +1521,8 @@ for(int i=0; i<tbs.size(); i++) {
     for(int j=0; j<tbs[i].partners.size(); j++) {
 	if (tbs[i].partners[j].body_id == what) {
             Point pt = tbs[i].partners[j].pt;
-	    //LOG printf("Mike: %6d from %6d at x,y=%.1f %.1f %s\n", what, tbs[i].body_id, pt.x, pt.y,
-            //LOG  names[name_map[tbs[i].body_id]]);
+	    fprintf(logfile, "Mike: %6d from %6d at x,y=%.1f %.1f %s\n", what, tbs[i].body_id, pt.x, pt.y,
+             names[name_map[tbs[i].body_id]]);
             Partner pp = tbs[i].partners[j];
             pp.body_id = tbs[i].body_id;
             p.push_back(pp);
@@ -1577,7 +1533,7 @@ for(int i=0; i<tbs.size(); i++) {
     }
 center.x /= count; center.y /= count;  // this is the overall center
 
-//LOG printf("Sorted by source id\n");
+fprintf(logfile, "Sorted by source id\n");
 sort(p.begin(), p.end() );
 // If option is enabled, find the center of the strongest connection instead of overall geometric center
 int strongest = 0;  // strength of strongest connection
@@ -1610,7 +1566,7 @@ char fname[128];
 sprintf(fname, "T4/%s/other", ty);    // other cell types
 FILE *fother = fopen(fname, "w");
 if (fother == NULL) {
-    //LOG printf("Could not open '%s'\n", fname);
+    printf("Could not open '%s'\n", fname);
     exit(42);
     }
 
@@ -1621,11 +1577,11 @@ for(int i=last+1; i<p.size(); i=last+1) {
     int ti = TypeIndex(Type);
     double sumx = 0.0, sumy = 0.0;
     for(int j=i; j<=last; j++) {
-        //LOG printf("From %6d at %.1f %.1f\n", p[j].body_id, p[j].pt.x, p[j].pt.y);
+        fprintf(logfile, "From %6d at %.1f %.1f\n", p[j].body_id, p[j].pt.x, p[j].pt.y);
 	sumx += p[j].pt.x;
         sumy += p[j].pt.y;
 	}
-    //LOG printf("\n");
+    fprintf(logfile, "\n");
     SumXbyType[ti] += sumx;
     SumYbyType[ti] += sumy;
     SumNbyType[ti] += (last - i +1);;
@@ -1636,7 +1592,7 @@ for(int i=last+1; i<p.size(); i=last+1) {
     sprintf(fname, "T4/%s/%s.lines", ty, Type);    // main cell types
     FILE *flines = fopen(fname, "a");
     if (flines == NULL) {
-	//LOG printf("Could not open '%s'\n", fname);
+	printf("Could not open '%s'\n", fname);
 	exit(42);
 	}
     for(int j=i; j <= last; j++) 
@@ -1648,7 +1604,7 @@ for(int i=last+1; i<p.size(); i=last+1) {
 	sprintf(fname, "T4/%s/T4.labels", ty);
 	FILE *flabels = fopen(fname, "a");
 	if (flabels == NULL) {
-	    //LOG printf("Could not open '%s'\n", fname);
+	    printf("Could not open '%s'\n", fname);
 	    exit(42);
 	    }
         char dir = names[name_map[p[i].body_id]][4];
@@ -1658,7 +1614,7 @@ for(int i=last+1; i<p.size(); i=last+1) {
     sprintf(fname, "T4/%s/%s", ty, Type);
     FILE *fp = fopen(fname, "a");
     if (fp == NULL) {
-	//LOG printf("cannot open '%s'\n", fname);
+	printf("cannot open '%s'\n", fname);
 	exit(42);
 	}
     for(int j=i; j<= last; j++)
@@ -1674,7 +1630,7 @@ for(int i=0; i<NumTypes-1; i++) {
     sprintf(fname, "T4/%s/%s.labels", ty, CellTypes[i].name);
     FILE *flabels = fopen(fname, "a");
     if (flabels == NULL) {
-	//LOG printf("Could not open '%s'\n", fname);
+	printf("Could not open '%s'\n", fname);
 	exit(42);
 	}
     double x = SumXbyType[i]/N;
@@ -1697,7 +1653,7 @@ double r1x = midx - xspan/2;
 double r1y = midy - (xspan/2)*bis;
 double r2x = midx + xspan/2;
 double r2y = midy + (xspan/2)*bis;
-//LOG printf("%.1f %.1f\n%.1f %.1f\n\n", r1x, r1y, r2x, r2y);
+fprintf(logfile, "%.1f %.1f\n%.1f %.1f\n\n", r1x, r1y, r2x, r2y);
 
 }
 
@@ -1708,21 +1664,21 @@ double r2y = midy + (xspan/2)*bis;
 void CircuitBacktrace(
  int root, vector<vector<unsigned char> > &from_to, vector<char *> &names, vector<bool> wanted, vector<bool> trace, int threshold)
 {
-//LOG printf("Michael:\n");
+fprintf(logfile, "Michael:\n");
 vector<bool> cell_used(names.size(), false);  // to avoid loops
 vector<int> look_at;
 look_at.push_back(root);  // for now, start with one T4
 vector<int> more;
 
 for(int hops=0; look_at.size() > 0; look_at = more) {
-    //LOG printf("----------- Cells %d hops from target----------\n", hops++);
+    fprintf(logfile, "----------- Cells %d hops from target----------\n", hops++);
     more.clear();
     vector<bool> req(names.size(), false);  // requested already on this pass?
     for(int k=0; k<look_at.size(); k++) 
 	req[look_at[k]] = true;             // already being considered
     for(int k=0; k<look_at.size(); k++) {
         int n = look_at[k];
-        //LOG printf(" Cell: %s\n", names[n] );
+        fprintf(logfile, " Cell: %s\n", names[n] );
         cell_used[n] = true;
         // add all inputs from cells of wanted types.
         for(int i=0; i<names.size(); i++) {
@@ -1731,7 +1687,7 @@ for(int hops=0; look_at.size() > 0; look_at = more) {
 		continue;
             int ti = TypeIndex(names[i]);
 	    if(wanted[ti]) {
-		//LOG printf("  Input from %-12s, %3d synapses\n", names[i], str );
+		fprintf(logfile, "  Input from %-12s, %3d synapses\n", names[i], str );
 		// if we want to trace, and not requested already, add to list    
 		if (trace[ti] && (!cell_used[i]) && !req[i]) {
 		    more.push_back(i);
@@ -1741,7 +1697,7 @@ for(int hops=0; look_at.size() > 0; look_at = more) {
 	    }
 	}
     }
-//LOG printf("------------------------ End of Circuit --------------------------\n");
+fprintf(logfile, "------------------------ End of Circuit --------------------------\n");
 }
 VecDoub FitALinear(const Doub x) {
 VecDoub ans(2);
@@ -1769,13 +1725,13 @@ vector<Point3d> ReadPajekFile(const char *name) {
 vector<Point3d> rslt;
 FILE *fp = fopen(name,"r");
 if (fp == NULL) {
-    //LOG printf("Could not open '%s'\n", name);
+    printf("Could not open '%s'\n", name);
     exit(42);
     }
 char junk[128];
 int N;
 fscanf(fp, "%s %d", junk, &N);
-//LOG printf("Opened '%s', got %d entries\n", name, N);
+fprintf(logfile, "Opened '%s', got %d entries\n", name, N);
 for(int i=0; i<N; i++) {
     double x,y,z;
     int j;
@@ -1803,7 +1759,7 @@ for(int i=0; i<rslts.size(); i++) {
 sort   (s.begin(), s.end());
 reverse(s.begin(), s.end());
 if (strcmp(names[KCs[k]], "KC-any") != 0 && s[0].index != k)
-    //LOG printf("How can this happen?? Closest is not itself? k=%d [0].index=%d dist=%f\n", k, s[0].index, s[0].val);
+    printf("How can this happen?? Closest is not itself? k=%d [0].index=%d dist=%f\n", k, s[0].index, s[0].val);
 //printf("Closest to %d are:", k);
 //for(int j=0; j<4; j++)
     //printf(" %s", names[KCs[s[j].index]] );
@@ -1820,10 +1776,10 @@ void FindCommonInputs(const char *name, vector<int> &KCs, vector<char *>&names,
 vector<int> outs;
 for(int i=0; i<names.size(); i++)
     if (strncmp(names[i],name,strlen(name)) == 0) {
-	//LOG printf("Neuron %s counts for %d and %.4f\n", names[i], (1 << outs.size()), pow(0.01, outs.size()+1) );
+	fprintf(logfile, "Neuron %s counts for %d and %.4f\n", names[i], (1 << outs.size()), pow(0.01, outs.size()+1) );
 	outs.push_back(i);
 	}
-//LOG printf("found %d of %s\n", outs.size(), name );
+fprintf(logfile, "found %d of %s\n", outs.size(), name );
 // now, for every KC, find all the outs it connects to, and generate a bitwise vector
 vector<sort_down> sa;
 for(int i=0; i<KCs.size(); i++) {
@@ -1837,16 +1793,23 @@ for(int i=0; i<KCs.size(); i++) {
     }
 sort(sa.begin(), sa.end() );
 for(int i=0; i<sa.size(); i++) {
-    if (i > 0 && int(sa[i].val) != int(sa[i-1].val)){}
-	//LOG printf("\n");
-    //LOG printf("Shinya: %4d %9d %12s %.4f\n", i, rev_map[KCs[sa[i].index]], names[KCs[sa[i].index]], sa[i].val );
+    if (i > 0 && int(sa[i].val) != int(sa[i-1].val))
+	fprintf(logfile, "\n");
+    fprintf(logfile, "Shinya: %4d %9d %12s %.4f\n", i, rev_map[KCs[sa[i].index]], names[KCs[sa[i].index]], sa[i].val );
     }
 }
 
 int main(int argc, char **argv)
 {
 
-//LOG printf("Starting!\n");
+char *logfilename = strdup("logfile.txt");
+if (argc > 1) 
+{
+    logfilename = argv[1];
+}
+logfile = fopen(logfilename, "w");
+
+printf("Starting!\n");
 Json::Value syn_root;   // will contain the root value after parsing synapse file
 Json::Value bdy_root;   // will contain the root value after parsing    body file
 Json::Value book_root;  // will contain the root value after parsing the bookmarks file
@@ -1858,18 +1821,18 @@ vector<char> huge(N, 0);
 
 //-------------------------  Read and parse the body JSON file -------------------------------------------
 char *fname = strdup("annotations-body.json");
-//LOG printf("Starting to read file %s\n", fname); fflush(stdout);
+fprintf(logfile, "Starting to read file %s\n", fname); fflush(stdout);
 FILE *fd = fopen(fname, "r");
 if (fd == NULL) {
-    //LOG printf("Cannot open '%s' for read.\n", fname);
+    printf("Cannot open '%s' for read.\n", fname);
     return 42;
     }
 if(fread(&huge[0], 1, N, fd) == N) {
-    //LOG printf("File too big!\n");
+    printf("File too big!\n");
     return 42;
     }
 fclose(fd);
-//LOG printf("JSON body file read, starting to parse.\n"); fflush(stdout);
+fprintf(logfile, "JSON body file read, starting to parse.\n"); fflush(stdout);
 bool parsingSuccessful = reader.parse(&huge[0], bdy_root );
 if ( !parsingSuccessful )
 {
@@ -1887,20 +1850,20 @@ map<int,int>  rev_map;  // and the reverse
 vector<char*> names;    // These are sequential.
 
 fname = strdup("synapse.json");
-//LOG printf("Starting to read file %s\n", fname); fflush(stdout);
+fprintf(logfile, "Starting to read file %s\n", fname); fflush(stdout);
 fd = fopen(fname, "r");
 if (fd == NULL) {
-    //LOG printf("Cannot open '%s' for read.\n", fname);
+    printf("Cannot open '%s' for read.\n", fname);
     return 42;
     }
 for(int i=0; i<huge.size(); i++)
     huge[i] = '\0';
 if(fread(&huge[0], 1, N, fd) == N) {
-    //LOG printf("File too big!\n");
+    printf("File too big!\n");
     return 42;
     }
 fclose(fd);
-//LOG printf("Synapse annotation file read, starting to parse.\n"); fflush(stdout);
+fprintf(logfile, "Synapse annotation file read, starting to parse.\n"); fflush(stdout);
 parsingSuccessful = reader.parse(&huge[0], syn_root );
 if ( !parsingSuccessful )
 {
@@ -1910,12 +1873,12 @@ if ( !parsingSuccessful )
     exit(42);
     }
 
-//LOG printf("parsed file...\n");
+fprintf(logfile, "parsed file...\n");
 Json::Value md = syn_root["metadata"];
 std::string des = md["description"].asString();
 int         ver = md["version"].asInt();
 
-//LOG printf("Description: '%s', version %d\n", des.c_str(), ver );
+fprintf(logfile, "Description: '%s', version %d\n", des.c_str(), ver );
 
 // OK, read and parsed both files.  Start by going through BODY file.  Need to consolidate all CT1
 // neurons.  This is a special case where they look like separate body IDs, but we know (from external
@@ -1927,17 +1890,17 @@ bool combine_CT1s = false;
 Json::Value data = bdy_root["data"];
 if (combine_CT1s) {
 for(unsigned int i=0; i<data.size(); i++) {
-    ////LOG printf("getting entry %d\n", i);
+    //fprintf(logfile, "getting entry %d\n", i);
     Json::Value v = data[i];
     // read the different things that can be in 'data'.  For now only "body ID" and "name"
     int t = v["body ID"].asInt();
-    //LOG printf("Body ID %d\n", t);
+    fprintf(logfile, "Body ID %d\n", t);
     Json::Value part = v["name"];
     if (!part.isNull()) {
 	string name = part.asString();
-	//LOG printf("Name %s\n", name.c_str() );
+	fprintf(logfile, "Name %s\n", name.c_str() );
         if (strncmp(name.c_str(), "CT1", 3) == 0) {
-	    //LOG printf("Found %s, ID %d\n", name.c_str(), t);
+	    fprintf(logfile, "Found %s, ID %d\n", name.c_str(), t);
             CT1s.insert(t);
 	    }
 	}
@@ -1949,7 +1912,7 @@ data = syn_root["data"];
 int Tcount = 0;
 int Scount = 0;
 for(unsigned int i=0; i<data.size(); i++) {
-    ////LOG printf("getting entry %d\n", i);
+    //fprintf(logfile, "getting entry %d\n", i);
     Json::Value v = data[i];
     // read the different things that can be in 'data'.  For now only {"T-bar","partner"} is known
     Json::Value t = v["T-bar"];
@@ -1980,18 +1943,17 @@ for(unsigned int i=0; i<data.size(); i++) {
 	    }
 	}
     }
-//LOG printf("Found %d unique IDs, %d T-bars, %d PSDs\n", name_map.size(), Tcount, Scount);
+fprintf(logfile, "Found %d unique IDs, %d T-bars, %d PSDs\n", name_map.size(), Tcount, Scount);
 
 //---------------------- now go through the JSON body file again
 vector<char> leaves(name_map.size(), 'U');  // 'U' for unknown, 't' for tangential, 'o' for orphan
 fd = fopen("AllNamedBodies.json","w");  // write a file of scripts to get volumes and areas
 if (fd == NULL) {
-    //LOG printf("Could not open script file 'AllNamedBodies.json'\n");
+    printf("Could not open script file 'AllNamedBodies.json'\n");
     return 42;
     }
 fprintf(fd, "{\"data\":[\n");
 int NPrint = 0;
-int Mi1 = -1;
 int Ncount = 0;
 data = bdy_root["data"];
 for(unsigned int i=0; i<data.size(); i++) {
@@ -1999,7 +1961,7 @@ for(unsigned int i=0; i<data.size(); i++) {
     Json::Value v = data[i];
     // read the different things that can be in 'data'.  For now only "body ID" and "name"
     int t = v["body ID"].asInt();
-    //LOG printf("Body ID %d\n", t);
+    fprintf(logfile, "Body ID %d\n", t);
     // Check to make sure it does not exist, then add it to the map
     bool in_the_map = name_map.find(t) != name_map.end();
     //if (!in_the_map)
@@ -2007,13 +1969,11 @@ for(unsigned int i=0; i<data.size(); i++) {
     Json::Value part = v["name"];
     if (!part.isNull()) {
 	string name = part.asString();
-        //LOG printf("Body name %s\n", name.c_str() );
+        fprintf(logfile, "Body name %s\n", name.c_str() );
         if (!in_the_map) {
-	    //LOG printf("Named body %s has no synapses??\n", name.c_str() );
+	    fprintf(logfile, "Named body %s has no synapses??\n", name.c_str() );
 	    continue;
 	    }
-        if (name == "Mi1 home")
-	    Mi1 = name_map[t];
         names[name_map[t]] = strdup(name.c_str() );
         //printf("echo looking for '%s'\n", name.c_str() );
         if (NPrint++ != 0)
@@ -2034,7 +1994,7 @@ for(unsigned int i=0; i<data.size(); i++) {
     }
 fprintf(fd, "]}\n");
 fclose(fd);
-//LOG printf("Found %d unique IDs, %d T-bars, %d PSDs, %d named bodies\n", name_map.size(), Tcount, Scount, Ncount);
+fprintf(logfile, "Found %d unique IDs, %d T-bars, %d PSDs, %d named bodies\n", name_map.size(), Tcount, Scount, Ncount);
 // -------------------- Read the bookmark file and generate column and plane info-----------
 vector<vector<vector<double> > > Centers(11, vector<vector<double> >(7, vector<double>(2)));
 vector<vector<double> > ZofCenters(11, vector<double>(7));
@@ -2056,22 +2016,22 @@ vector<double> areas(names.size(), -1.0);
 vector<double> volumes(names.size(), -1.0);
 fd = fopen("AllStats.txt", "r");
 if (fd == NULL) {
-    //LOG printf("No size file present\n");
+    printf("No size file present\n");
     }
 else {
     // get all the triples.
     int N = -1;
     fscanf(fd, "%d", &N);
-    //LOG printf("Reading %d sizes and areas\n", N);
+    fprintf(logfile, "Reading %d sizes and areas\n", N);
     for (int c = getc(fd); c!=EOF; c = getc(fd)) {
 	if (isdigit(char(c))) {
 	    ungetc(char(c), fd);
             int id;
             double vol, area;
             fscanf(fd, "%d %lf %lf", &id, &vol, &area);
-	    //LOG printf("ID %d, vol %.2f, area %.2f\n", id, vol/1e6, area/1e4);
+	    fprintf(logfile, "ID %d, vol %.2f, area %.2f\n", id, vol/1e6, area/1e4);
             if (name_map.find(id) == name_map.end() ) {
-		//LOG printf("Size file lists ID %d not in name map!\n", id);
+		printf("Size file lists ID %d not in name map!\n", id);
 		return 42;
 		}
             volumes[name_map[id]] = vol/1e6;  // 10nm per voxel
@@ -2087,14 +2047,14 @@ bool csv = true;
 //-------------------------  Read the file of neurotransmitter types
 fd = fopen("nlist.txt", "r");
 if (fd == NULL) {
-    //LOG printf("No file 'nlist.txt' present\n");
+    printf("No file 'nlist.txt' present\n");
     }
 else {
     size_t nby;
     char *buffer = NULL;
     getline(&buffer, &nby, fd); // ignore the first line
     while (getline(&buffer, &nby, fd) != -1) {
-        //LOG printf("Got '%s'\n", buffer); fflush(stdout);
+        fprintf(logfile, "Got '%s'\n", buffer); fflush(stdout);
 	char *name = strtok(buffer, " ");
         char *tr = strtok(NULL, " ");	// get the second space separated token - the list of transmitters
         char *re = strtok(NULL, " ");   // list of receptors
@@ -2140,11 +2100,11 @@ for(unsigned int i=0; i<data.size(); i++) {
         co             = t["roi"];
         tb.roi         = co.isNull() ? 0 : (co.asString()[5] - '0');
         tb.gid         = 0;
-	//LOG printf("TB convergent %d, flagged %d, roi %d\n", tb.convergent, tb.flagged, tb.roi);
+	fprintf(logfile, "TB convergent %d, flagged %d, roi %d\n", tb.convergent, tb.flagged, tb.roi);
         if (CT1s.find(tb.body_id) != CT1s.end())   // If any of the CT1s, replace by first
 	    tb.body_id = *(CT1s.begin());
         if (name_map.find(tb.body_id) == name_map.end()) {
-	    //LOG printf("No %d for TBar in map\n", tb.body_id);
+	    fprintf(logfile, "No %d for TBar in map\n", tb.body_id);
 	    continue;
 	    }
 	tb.pt.x = lo[0u].asDouble();
@@ -2159,16 +2119,16 @@ for(unsigned int i=0; i<data.size(); i++) {
 	    prt.body_id    = part[j]["body ID"].asInt();
             Json::Value b  = part[j]["flagged"];
             prt.flagged    = b.isNull() ? false : b.asBool(); // if not present, make false
-            //LOG printf("  Flag for psd is %d\n", prt.flagged);
+            fprintf(logfile, "  Flag for psd is %d\n", prt.flagged);
 	    if (CT1s.find(prt.body_id) != CT1s.end())   // If any of the CT1s, replace by first
 		prt.body_id = *(CT1s.begin());
             if (name_map.find(prt.body_id) == name_map.end()) {
-	        //LOG printf("No %d for partner in map\n", prt.body_id);
+	        fprintf(logfile, "No %d for partner in map\n", prt.body_id);
 	        continue;
 	        }
             int to_id = name_map[prt.body_id];
             if(from_to[from_id][to_id] == 255) {
-		//LOG printf("Oh no!  Overflow! %d %d\n",tb.body_id, prt.body_id );
+		printf("Oh no!  Overflow! %d %d\n",tb.body_id, prt.body_id );
 		}
 	    if (KeepSynapse(tb.convergent)) {
                 from_to[from_id][to_id]++;
@@ -2182,8 +2142,8 @@ for(unsigned int i=0; i<data.size(); i++) {
             if (prt.body_id == tb.body_id) { // found an autapse
 		char *name = names[name_map[prt.body_id]];
 		if (!isdigit(name[0])) {
-                    //LOG printf("Autapse:  %s Tbar at %d %d %d, psd at %d %d %d\n", name, 
-		    //LOG int(tb.pt.x), int(tb.pt.y), tb.z, int(prt.pt.x), int(prt.pt.y), prt.z);
+                    fprintf(logfile, "Autapse:  %s Tbar at %d %d %d, psd at %d %d %d\n", name, 
+		    int(tb.pt.x), int(tb.pt.y), tb.z, int(prt.pt.x), int(prt.pt.y), prt.z);
 		    }
 		}
 	    //printf("   Partner %d, confidence %f. loc=%f %f %d\n", j, prt.confidence, prt.pt.x, prt.pt.y, prt.z);
@@ -2211,7 +2171,7 @@ for(int i=0; i<names.size(); i++) {
 		post += from_to[i][x];
                 num_post++;
 	        }
-        //LOG printf(" --- Name %s, pre %d/%d,   post %d/%d\n", names[i], pre, num_pre, post, num_post);
+        fprintf(logfile, " --- Name %s, pre %d/%d,   post %d/%d\n", names[i], pre, num_pre, post, num_post);
         if (isdigit(names[i][0]) &&
          70 <=  pre &&   pre <= 130 && 40 <=  num_pre &&   num_pre <= 80 &&
 	 130 <= post && post <= 250 && 70 <= num_post && num_post <= 130) { //looks like a KC
@@ -2220,7 +2180,7 @@ for(int i=0; i<names.size(); i++) {
 	        sprintf(new_name, "KCs-guess-%d", frag_id++);
             else
 	        sprintf(new_name, "KCc-guess-%d", frag_id++);
-	    //LOG printf("Cell with name %s had %d mentions and is renamed to %s\n", names[i], mentioned[i], new_name);
+	    fprintf(logfile, "Cell with name %s had %d mentions and is renamed to %s\n", names[i], mentioned[i], new_name);
 	    names[i] = strdup(new_name);  // memory leak, but who cares
             }
 	}
@@ -2230,7 +2190,7 @@ for(int i=0; i<names.size(); i++) {
     if (mentioned[i] >= MENT_THRESHOLD && isdigit(names[i][0])) {
 	char new_name[128];
         sprintf(new_name, "Fragment-%d", frag_id++);
-	//LOG printf("Cell with name %s had %d mentions and is renamed to %s\n", names[i], mentioned[i], new_name);
+	fprintf(logfile, "Cell with name %s had %d mentions and is renamed to %s\n", names[i], mentioned[i], new_name);
         names[i] = strdup(new_name);  // memory leak, but who cares
 	}
     }
@@ -2257,28 +2217,28 @@ for(int changes=0; changes > 0; ){
 	    if (strcmp(names[k], "KC-s") == 0) s++;
 	    if (strcmp(names[k], "KC-p") == 0) p++;
 	    }
-	//LOG printf("GUESS c=%d s=%d p=%d\n",c, s, p);
+	fprintf(logfile, "GUESS c=%d s=%d p=%d\n",c, s, p);
         char *old = names[i];
 	if (c > 10*(s+p)) {names[i] = strdup("KC-c"); changes++;}
 	if (s > 10*(c+p)) {names[i] = strdup("KC-s"); changes++;}
 	if (p > 10*(c+s)) {names[i] = strdup("KC-p"); changes++;}
-        if (names[i] != old){}
-	    //LOG printf("Changed BodyId %d to %s\n", rev_map[i], names[i]);
+        if (names[i] != old)
+	    fprintf(logfile, "Changed BodyId %d to %s\n", rev_map[i], names[i]);
 	}
-    //LOG printf("---GUESS: %d changes\n", changes);
+    fprintf(logfile, "---GUESS: %d changes\n", changes);
     }
 // Let's make a partitioning file for KCs
 if (true) {
     FILE *fp = fopen("hm","w");             // One file for HMetis
     if (fp == NULL) {
-	//LOG printf("Can't open hm\n");
+	printf("Can't open hm\n");
 	return 42;
 	}
     vector<int>KCs;
     for(int i=0; i<names.size(); i++)
 	if (strncmp(names[i],"KC",2) == 0)
 	    KCs.push_back(i);
-    //LOG printf("PART: There are %d Kenyon Cells\n", KCs.size() );
+    fprintf(logfile, "PART: There are %d Kenyon Cells\n", KCs.size() );
     // count the connections
     int count = 0;
     for(int i=0; i<KCs.size(); i++)
@@ -2295,7 +2255,7 @@ if (true) {
     fclose(fp);
     fp = fopen("FixFile","w");
     if (fp == NULL) {
-	//LOG printf("Can't open FixFile\n");
+	printf("Can't open FixFile\n");
 	return 42;
 	}
     vector<int> part_count(2,0);
@@ -2313,7 +2273,7 @@ if (true) {
     fflush(stdout);
     fp = fopen("hm.part.2","r");
     if (fp == NULL) {
-	//LOG printf("Can't open hm.part.2\n");
+	printf("Can't open hm.part.2\n");
 	return 42;
         }
     for(int i=0; i<KCs.size(); i++) {
@@ -2327,7 +2287,7 @@ if (true) {
     for(int i=0; i<KCs.size(); i++) {
 	if (used[i])
 	    continue;	// skip an already used
-	//LOG printf("Component starting at %d\n", i);
+	fprintf(logfile, "Component starting at %d\n", i);
 	stack<int> look;
 	look.push(i);
 	while (!look.empty()) {
@@ -2345,7 +2305,7 @@ if (true) {
     // Is is better to uses 'arcs' (directed) or 'edges' (undirected)?
     fp = fopen("PajekTest.net","w");             // One file for HMetis
     if (fp == NULL) {
-	//LOG printf("Can't open PajekTest.net\n");
+	printf("Can't open PajekTest.net\n");
 	return 42;
 	}
     fprintf(fp, "*vertices %d\n", KCs.size());
@@ -2382,14 +2342,14 @@ if (true) {
     rslts.push_back(ReadPajekFile("P-VOS-2D.net"));
     rslts.push_back(ReadPajekFile("P-VOS-3D.net"));
     for(int i=0; i<KCs.size(); i++) {
-        //LOG printf("%6d %8d %12s ", i, rev_map[KCs[i]], names[KCs[i]]);
+        fprintf(logfile, "%6d %8d %12s ", i, rev_map[KCs[i]], names[KCs[i]]);
         vector<char> cs;
 	for(int k=0; k<rslts.size(); k++) {
 	    char c = FindMembership(i, rslts[k], KCs, names);
-	    //LOG printf("%c", c);
+	    fprintf(logfile, "%c", c);
             cs.push_back(c);
 	    }
-	//LOG printf("\n");
+	fprintf(logfile, "\n");
         char *name = names[KCs[i]];
         if (strcmp(name,"KC-s") == 0 || strcmp(name,"KC-p") == 0 || strcmp(name, "KC-c") == 0) {
 	    // already classified.  See if consistent.  In best case, get all upper case of same type
@@ -2401,10 +2361,10 @@ if (true) {
 		disagree += (cs[k] != cl);
 		}
 	    if (disagree > 1) {
-		//LOG printf("--------Susicious classification.  Body ID %d is labeled %s but best matches are ", rev_map[KCs[i]], name);
-                for(int k=0; k<cs.size(); k++){}
-		    //LOG printf("%c",cs[k]);
-		//LOG printf("\n");
+		fprintf(logfile, "--------Susicious classification.  Body ID %d is labeled %s but best matches are ", rev_map[KCs[i]], name);
+                for(int k=0; k<cs.size(); k++)
+		    fprintf(logfile, "%c",cs[k]);
+		fprintf(logfile, "\n");
 		}
 	    }
 	else if (strcmp(name,"KC-any") == 0) {
@@ -2416,7 +2376,7 @@ if (true) {
 		}
 	    //printf("agree %d, disagree %d, size %d\n", agree, disagree, cs.size() );
 	    if (agree == cs.size()) {
-		//LOG printf("--------It's unanimous.  Body ID %d is labeled %s but looks like KC-%c\n", rev_map[KCs[i]], name, cl);
+		fprintf(logfile, "--------It's unanimous.  Body ID %d is labeled %s but looks like KC-%c\n", rev_map[KCs[i]], name, cl);
 		}
 	    }
         }
@@ -2440,12 +2400,12 @@ for(int i=0; i<tbs.size(); i++) {
     stack<int> st;
     tbs[i].gid = group_id;
     st.push(i);
-    //LOG printf("\nGroup %d, adding %d\n", group_id, i);
+    fprintf(logfile, "\nGroup %d, adding %d\n", group_id, i);
     vector<int> gp;
     while (!st.empty()) {
 	int curr = st.top();
 	st.pop();
-	//LOG printf(" Just popped %d\n", curr);
+	fprintf(logfile, " Just popped %d\n", curr);
         gp.push_back(curr);
 	double best = 1e5;
         int old = st.size();
@@ -2458,46 +2418,46 @@ for(int i=0; i<tbs.size(); i++) {
 		    double d = PartnerDist(tbs[curr].partners[j], tbs[k].partners[m]);
                     best = min(best, d);
 		    if (d <= CLOSE) {
-			//LOG printf("Tbar %d, [%d] <- %.2f -> Tbar %d, [%d] \n", i, j, d, k, m);
+			fprintf(logfile, "Tbar %d, [%d] <- %.2f -> Tbar %d, [%d] \n", i, j, d, k, m);
 			tbs[k].gid = group_id;
 			st.push(k);
-			//LOG printf(" Pushing %d\n", k);
+			fprintf(logfile, " Pushing %d\n", k);
 		        break;
 			}
 		    }
 		}
 	    }
-        if (st.size() == old){}
-	    //LOG printf("None found within range.  Best = %.2f\n", best);
+        if (st.size() == old)
+	    fprintf(logfile, "None found within range.  Best = %.2f\n", best);
 	}
     groups.push_back(gp);
     group_id++;
     }
 // Print them out.
 for(int i=0; i<groups.size(); i++) {
-    //LOG printf("\nGroup %d\n", i);
+    fprintf(logfile, "\nGroup %d\n", i);
     map<int,int> m;
     for(int j=0; j<groups[i].size(); j++) {
         int t = groups[i][j];
-	//LOG printf("  Tbar id %8d%c%c -> ", tbs[t].body_id, tbs[t].convergent ? '*': ' ', tbs[t].flagged ? '+' : ' ');
+	fprintf(logfile, "  Tbar id %8d%c%c -> ", tbs[t].body_id, tbs[t].convergent ? '*': ' ', tbs[t].flagged ? '+' : ' ');
 	for(int k=0; k < tbs[t].partners.size(); k++) {
             int n = tbs[t].partners[k].body_id;
-	    //LOG printf("%8d%c ", n, tbs[t].partners[k].flagged ? '+' : ' ');
+	    fprintf(logfile, "%8d%c ", n, tbs[t].partners[k].flagged ? '+' : ' ');
             if (m.find(n) == m.end() )
 		m[n] = 1;
 	    else
 		m[n] = m[n]+1;
 	    }
-	//LOG printf("\t(%5d, %5d, %5d)", int(tbs[t].pt.x), int(tbs[t].pt.y), tbs[t].z);
-	//LOG printf("\n");
+	fprintf(logfile, "\t(%5d, %5d, %5d)", int(tbs[t].pt.x), int(tbs[t].pt.y), tbs[t].z);
+	fprintf(logfile, "\n");
 	}
     map<int,int>::iterator mi;
-    for(mi = m.begin(); mi != m.end(); mi++){}
-	//LOG printf("%9d %2d%c\n", mi->first, mi->second, mi->second == groups[i].size() ? '*' : ' ');
+    for(mi = m.begin(); mi != m.end(); mi++)
+	fprintf(logfile, "%9d %2d%c\n", mi->first, mi->second, mi->second == groups[i].size() ? '*' : ' ');
    }
 // Zipursky code here ------------------------------------------------------------
 int tiL2 = TypeIndex("L2");
-//LOG printf("Zipurksy, looking for %d\n", tiL2);
+fprintf(logfile, "Zipurksy, looking for %d\n", tiL2);
 for(unsigned int i=0; i<data.size(); i++) {
     //printf("getting entry %d\n", i);
     Json::Value v = data[i];
@@ -2511,7 +2471,7 @@ for(unsigned int i=0; i<data.size(); i++) {
 	tb.confidence  = t["confidence"].asDouble();
 	tb.body_id     = t["body ID"].asInt();
         if (name_map.find(tb.body_id) == name_map.end()) {
-	    //LOG printf("No %d for TBar in map\n", tb.body_id);
+	    fprintf(logfile, "No %d for TBar in map\n", tb.body_id);
 	    continue;
 	    }
 	char *name = names[name_map[tb.body_id]];
@@ -2520,14 +2480,14 @@ for(unsigned int i=0; i<data.size(); i++) {
 	tb.pt.x = lo[0u].asDouble();
 	tb.pt.y = lo[1u].asDouble();
         tb.z    = lo[2u].asInt();
-	//LOG printf(" Tb-bar on %s, partners [", name );
+	fprintf(logfile, " Tb-bar on %s, partners [", name );
         vector<string> pnames;
 	for(int j=0; j<part.size(); j++) {
 	    Partner prt;
 	    prt.confidence = part[j]["confidence"].asDouble();
 	    prt.body_id    = part[j]["body ID"].asInt();
             if (name_map.find(prt.body_id) == name_map.end()) {
-	        //LOG printf("No %d for partner in map\n", prt.body_id);
+	        fprintf(logfile, "No %d for partner in map\n", prt.body_id);
 	        continue;
 	        }
             name = names[name_map[prt.body_id]];
@@ -2542,17 +2502,17 @@ for(unsigned int i=0; i<data.size(); i++) {
 	sort(pnames.begin(), pnames.end());
         int ndup = 0;
 	for(int j=0; j<pnames.size(); j++) {
-	    //LOG printf("%12s", pnames[j].c_str());
+	    fprintf(logfile, "%12s", pnames[j].c_str());
             if (j > 0 && pnames[j].compare(pnames[j-1]) == 0)
 		ndup++;
 	    }
-	//LOG printf(" ] %d dup\n", ndup);
+	fprintf(logfile, " ] %d dup\n", ndup);
 	}
     }
-//LOG printf("End Zipursky\n");
+fprintf(logfile, "End Zipursky\n");
 // End Zipursky ------------------------------------------------------------------
 // Percentage complete code
-//LOG printf("Completeness by PSDs identified\n");
+fprintf(logfile, "Completeness by PSDs identified\n");
 for(int from=0; from<names.size(); from++) {
     if (isdigit(names[from][0]))
 	continue;
@@ -2566,13 +2526,13 @@ for(int from=0; from<names.size(); from++) {
 	else
 	    known += str;
 	}
-    //LOG printf(" Cell %15s: %4d known, %4d unknown, %.2f%% complete\n", names[from], known, unknown, known/double(known+unknown)*100.0);
+    fprintf(logfile, " Cell %15s: %4d known, %4d unknown, %.2f%% complete\n", names[from], known, unknown, known/double(known+unknown)*100.0);
     }
-//LOG printf("End of Completeness\n");
+fprintf(logfile, "End of Completeness\n");
 // End of completeness -----------------------------------------------------------
 bool slow = true;
 if (slow) {
-//LOG printf("Unknown cells:\n");
+fprintf(logfile, "Unknown cells:\n");
 vector<sort_down> sd;
 for(int i=0; i<names.size(); i++) {
     if (strncmp(names[i], "Frag", 4) != 0)  // only try the fragments
@@ -2597,17 +2557,17 @@ for(int i=0; i<names.size(); i++) {
 	else
 	    ink += str;
 	}
-    //LOG printf(" Cell %15s: %4d known in, %4d unknown in, %4d known out, %4d unknown out, %4d total\n", names[i], ink, inu, outk, outu, ink+inu+outk+outu);
+    fprintf(logfile, " Cell %15s: %4d known in, %4d unknown in, %4d known out, %4d unknown out, %4d total\n", names[i], ink, inu, outk, outu, ink+inu+outk+outu);
     fflush(stdout);
     sort_down s(i, ink + outk);
     sd.push_back(s);
     }
-//LOG printf("End of Unknown.  %d candidates\n", sd.size() );
+fprintf(logfile, "End of Unknown.  %d candidates\n", sd.size() );
 fflush(stdout);
 sort(sd.begin(), sd.end());
 for(int j=0; j<25 && j < sd.size(); j++) {
     int i = sd[j].index;
-    //LOG printf("Cell %s has %d known connections\n", names[i], int(sd[j].val) );
+    fprintf(logfile, "Cell %s has %d known connections\n", names[i], int(sd[j].val) );
     vector<int> ins_by_type(NumTypes,0);
     vector<int> out_by_type(NumTypes,0);
     vector<int> str_ins_by_type(NumTypes, 0);
@@ -2617,7 +2577,7 @@ for(int j=0; j<25 && j < sd.size(); j++) {
 	if (str == 0) 
 	    continue;
 	if (!isdigit(names[to][0])) {
-	    //LOG printf("   To %15s, strength %d\n", names[to], str);
+	    fprintf(logfile, "   To %15s, strength %d\n", names[to], str);
             int ty = TypeIndex(names[to]);
             out_by_type[ty]++;
             str_out_by_type[ty] += str;
@@ -2628,7 +2588,7 @@ for(int j=0; j<25 && j < sd.size(); j++) {
 	if (str == 0) 
 	    continue;
 	if (!isdigit(names[from][0])) {
-	    //LOG printf(" From %15s, strength %d\n", names[from], str);
+	    fprintf(logfile, " From %15s, strength %d\n", names[from], str);
             int ty = TypeIndex(names[from]);
             ins_by_type[ty]++;
             str_ins_by_type[ty] += str;
@@ -2636,23 +2596,20 @@ for(int j=0; j<25 && j < sd.size(); j++) {
 	}
     for(int k=0; k<NumTypes; k++) {
         if (ins_by_type[k] > 0 || out_by_type[k] > 0) {
-	    //LOG printf("  Type %15s, ins %d cells, total str %d,  outs %d cells, total str %d\n", CellTypes[k].name,
-	     //LOG ins_by_type[k], str_ins_by_type[k], out_by_type[k], str_out_by_type[k] );
+	    fprintf(logfile, "  Type %15s, ins %d cells, total str %d,  outs %d cells, total str %d\n", CellTypes[k].name,
+	     ins_by_type[k], str_ins_by_type[k], out_by_type[k], str_out_by_type[k] );
 	    }
 	}
     }
 }
 // End of completeness -----------------------------------------------------------
-//LOG printf("Read %d Tbars\n", tbs.size());
+fprintf(logfile, "Read %d Tbars\n", tbs.size());
 // Plot maps of Synapse spots
 // These should look up the synapse IDS from the names, but we cheat here.
 //MapXYs(tbs, 568121, "bf", name_map, names);
 //MapXYs(tbs, 571372, "du", name_map, names);
 //MapXYs(tbs, 597861, "fb", name_map, names);
 //MapXYs(tbs, 598856, "ud", name_map, names);
-vector<double> Mi1x;   // keep track of all 'Mi1 H' specifically, to fit column coordinates.
-vector<double> Mi1y;
-vector<double> Mi1z;
 // OK, create the set to average the location of each chunk.   This is the only use of the tsb vector, so this could
 // be done in the above loop.  Also, since we now create 'ss' we could get rid of the huge matrix.
 // Also, create a matrix of which cell types have synapses in each layer.
@@ -2679,11 +2636,6 @@ for(int i=0; i<tbs.size(); i++) {
         int ti = TypeIndex(names[id]);
         s_vs_ml[ti][med_lay]++;
 	}
-    if (name_map[tbs[i].body_id] == Mi1) {
-	Mi1x.push_back(tbs[i].pt.x);
-	Mi1y.push_back(tbs[i].pt.y);
-	Mi1z.push_back(tbs[i].z);
-	}
     // create a unique list of partners
     vector<int>partners;
     for(int j=0; j<tbs[i].partners.size(); j++)
@@ -2700,7 +2652,7 @@ for(int i=0; i<tbs.size(); i++) {
 	}
     }
 // ----------------- For named pairs, compute strength/Tbar ratio
-//LOG printf("Strength/TBar ratio\n");
+fprintf(logfile, "Strength/TBar ratio\n");
 for(int from=0; from<names.size(); from++) {
     if (isdigit(names[from][0]))
 	continue;
@@ -2710,13 +2662,13 @@ for(int from=0; from<names.size(); from++) {
 	    continue;
         where local(from, to, 0);
         set<where>::iterator look = Tbar_by_pair.find(local);
-        if (look == Tbar_by_pair.end()){} // should always find at least one.
-	    //LOG printf("What?? can't find %s %s %d %d\n", names[from], names[to], from, to);
-	else{}
-	    //LOG printf("  From %11s, to %11s, ratio=%.3f (%4d conn, %4d Tbars)\n", names[from], names[to], double(str)/look->n, str, look->n);
+        if (look == Tbar_by_pair.end()) // should always find at least one.
+	    printf("What?? can't find %s %s %d %d\n", names[from], names[to], from, to);
+	else
+	    fprintf(logfile, "  From %11s, to %11s, ratio=%.3f (%4d conn, %4d Tbars)\n", names[from], names[to], double(str)/look->n, str, look->n);
 	}
     }
-//LOG printf("End of ratio\n");
+fprintf(logfile, "End of ratio\n");
 map<string, double> from_to_ratio;
 map<string, double> from_to_weight;
 // Now, let's do this again, assuming the unknown partners are picked at random from the same cell's known connections in the same layer.
@@ -2748,7 +2700,7 @@ for(int i=0; i<tbs.size(); i++) {
         if (isdigit(names[id][0])) {
             int N = ctab[T_id][med_lay].size();
 	    if (N == 0) {
-		//LOG printf("No named connections for %s, layer M%d\n", names[T_id], med_lay);
+		fprintf(logfile, "No named connections for %s, layer M%d\n", names[T_id], med_lay);
 	        tbs[i].partners[j].fake_id = tbs[i].partners[j].body_id;   // so it still could un-named, worst case
 	        }
             else
@@ -2788,7 +2740,7 @@ for(int i=0; i<tbs.size(); i++) {
 	    }
 	}
     }
-//LOG printf("2:Strength/TBar ratio\n");
+fprintf(logfile, "2:Strength/TBar ratio\n");
 for(int from=0; from<names.size(); from++) {
     if (isdigit(names[from][0]))
 	continue;
@@ -2803,12 +2755,12 @@ for(int from=0; from<names.size(); from++) {
         if (str == 0)
 	    continue;
         look = Tbar_by_pair.find(local);
-        if (look == Tbar_by_pair.end()){} // should always find at least one.
-	    //LOG printf("What?? can't find %s %s %d %d\n", names[from], names[to], from, to);
+        if (look == Tbar_by_pair.end()) // should always find at least one.
+	    fprintf(logfile, "What?? can't find %s %s %d %d\n", names[from], names[to], from, to);
 	else {
-	    //LOG printf("  From %11s, to %11s, ratio=%.3f (%4d conn, %4d Tbars)\n", names[from], names[to], double(str)/look->n, str, look->n);
+	    fprintf(logfile, "  From %11s, to %11s, ratio=%.3f (%4d conn, %4d Tbars)\n", names[from], names[to], double(str)/look->n, str, look->n);
             string name = string(BaseName(names[from])) + ":" + string(BaseName(names[to]));
-	    //LOG printf("Inserting %s\n", name.c_str() );
+	    fprintf(logfile, "Inserting %s\n", name.c_str() );
             if (from_to_ratio.find(name) != from_to_ratio.end()) {
 	        from_to_ratio[name]  = from_to_ratio[name]  + double(str);
                 from_to_weight[name] = from_to_weight[name] + look->n;
@@ -2820,32 +2772,32 @@ for(int from=0; from<names.size(); from++) {
 	    }
 	}
     }
-//LOG printf("2:End of ratio\n");
+fprintf(logfile, "2:End of ratio\n");
 }
-//LOG printf("There are %d unique ID pairs\n", ss.size());
+fprintf(logfile, "There are %d unique ID pairs\n", ss.size());
 // Print a table of cell types and synapse counts
-//LOG printf("Cell type     M1    M2    M3    M4    M5    M6    M7    M8    M9   M10\n");
-//LOG printf("----------  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----\n");
+fprintf(logfile, "Cell type     M1    M2    M3    M4    M5    M6    M7    M8    M9   M10\n");
+fprintf(logfile, "----------  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----\n");
 vector<int> HowManyTypes(11,0);
 for(int i=0; i<NumTypes; i++) {
-    //LOG printf("%10s", CellTypes[i].name);
+    fprintf(logfile, "%10s", CellTypes[i].name);
     for(int j=1; j<=10; j++) {
-	//LOG printf("%6d", s_vs_ml[i][j] );
+	fprintf(logfile, "%6d", s_vs_ml[i][j] );
         if (s_vs_ml[i][j] >= 10)
 	    HowManyTypes[j]++;
 	}
-    //LOG printf("\n");
+    fprintf(logfile, "\n");
     }
-//LOG printf("----------  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----\n");
-//LOG printf("Types >=10");
+fprintf(logfile, "----------  ----  ----  ----  ----  ----  ----  ----  ----  ----  ----\n");
+fprintf(logfile, "Types >=10");
 for(int j=1; j<=10; j++)
-    //LOG printf("%6d", HowManyTypes[j]);
-//LOG printf("\n");
+    fprintf(logfile, "%6d", HowManyTypes[j]);
+fprintf(logfile, "\n");
 // Print the names of all cells with Tbars
-//LOG printf("\nTbar counts\n");
+fprintf(logfile, "\nTbar counts\n");
 for(int i=0; i<names.size(); i++) {
-    if (Tbar_count[i] > 0){}
-	//LOG printf("Cell %12s has %d Tbars\n", names[i], Tbar_count[i]);
+    if (Tbar_count[i] > 0)
+	fprintf(logfile, "Cell %12s has %d Tbars\n", names[i], Tbar_count[i]);
     }
 // Write a file of overall type information.   This is a set of 10 matrices, each NumTypes x Numtypes.
 // One has the total connection count, then one for each layer.
@@ -2874,7 +2826,7 @@ for(int k=0; k<11; k++) {
     sprintf(name, "ConnByType.%d.csv", k);
     FILE *f = fopen(name, "w");
     if (f == NULL) {
-	//LOG printf("Cound not open %s\n", name);
+	printf("Cound not open %s\n", name);
 	return 42;
 	}
     // write the top line
@@ -2891,13 +2843,13 @@ for(int k=0; k<11; k++) {
     fclose(f);
     }
 // print TBars for Michael
-//LOG printf("TBars for Michael\n");
-for(int i=0; i<NumTypes; i++){}
-    //LOG printf("%15s %4d\n", CellTypes[i].name, TBs[i] );
-//LOG printf("End Michael\n");
+fprintf(logfile, "TBars for Michael\n");
+for(int i=0; i<NumTypes; i++)
+    fprintf(logfile, "%15s %4d\n", CellTypes[i].name, TBs[i] );
+fprintf(logfile, "End Michael\n");
 }
 // Write a file for clustering attempts.  Compute a feature vector for each named cell.
-//LOG printf("Clustering test\n");
+fprintf(logfile, "Clustering test\n");
 fflush(stdout);
 for(int i=0; i<names.size(); i++) {
     if (incomplete[i] || isdigit(names[i][0]))
@@ -2916,34 +2868,22 @@ for(int i=0; i<names.size(); i++) {
                 ins[k] += it->n;
 	    }
 	}
-    //LOG printf("%12s :", names[i]);
+    fprintf(logfile, "%12s :", names[i]);
     fflush(stdout);
     for(int k=1; k<=10; k++)
-	//LOG printf("%5d", ins[k]);
-    //LOG printf("    ");
+	fprintf(logfile, "%5d", ins[k]);
+    fprintf(logfile, "    ");
     for(int k=1; k<=10; k++)
-	//LOG printf("%5d", outs[k]);
-    //LOG printf("%8.2f %8.2f\n", volumes[i], areas[i]);
+	fprintf(logfile, "%5d", outs[k]);
+    fprintf(logfile, "%8.2f %8.2f\n", volumes[i], areas[i]);
     fflush(stdout);
     }
 
-// Calculate tilt of the columns
-if (Mi1x.size() > 1) {
-    //LOG printf("Estimating from %d synapses on 'Mi1 H':\n", Mi1x.size() );
-    Fitab xfitter(Mi1z,Mi1x);
-    //LOG printf("  X as a function of Z %f %f\n", xfitter.a, xfitter.b);
-    Fitab yfitter(Mi1z,Mi1y);
-    //LOG printf("  Y as a function of Z %f %f\n", yfitter.a, yfitter.b);
-    }
-else {
-    //LOG printf("No Mi1 H??\n");
-    //return 42;
-    }
 
 // Look for all the overlaps
 fd = fopen("gimme_overlaps","w");  // write a file of scripts to get volumes and areas
 if (fd == NULL) {
-    //LOG printf("Could not open script file 'gimme_overlap'\n");
+    printf("Could not open script file 'gimme_overlap'\n");
     return 42;
     }
 fprintf(fd, "#!/bin/sh\n");
@@ -2961,7 +2901,7 @@ system("chmod +x gimme_overlaps");
 set<overlap> Overlaps;
 fd = fopen("overlaps","r");  // write a file of scripts to get volumes and areas
 if (fd == NULL) {
-    //LOG printf("Could not open file 'overlaps' for read\n");
+    printf("Could not open file 'overlaps' for read\n");
     }
 else {
     int i = 0;
@@ -2976,13 +2916,13 @@ else {
         overlap o(i1, i2, d);
 	Overlaps.insert(o);
 	}
-    //LOG printf("Read %d overlaps\n", i);
+    fprintf(logfile, "Read %d overlaps\n", i);
     vector<sort_overlap> sort_over(Overlaps.size());
     int j=0;
     for(set<overlap>::iterator i = Overlaps.begin(); i != Overlaps.end(); i++)
 	sort_over[j++].it = i;
     sort(sort_over.begin(), sort_over.end() );
-    //LOG printf("Sorted!\n");
+    fprintf(logfile, "Sorted!\n");
     for(int i=0; i<sort_over.size(); i++) {
         int id1 = name_map[sort_over[i].it->id1];
         int id2 = name_map[sort_over[i].it->id2];
@@ -2994,8 +2934,8 @@ else {
 	    {char *tmp = name1; name1 = name2; name2 = tmp; int t = n1; n1 = n2; n2 = t;}
         int sum = from_to[id1][id2] + from_to[id2][id1];
         double area = sort_over[i].it->area;
-	 //LOG printf("%9s %9s %10.4f - %3d %3d %3d  - %5.2f %5.2f %5.2f per square micron\n", name1, name2, sort_over[i].it->area, 
-	 //LOG n1, n2, sum, n1/area, n2/area, sum/area);
+	 fprintf(logfile, "%9s %9s %10.4f - %3d %3d %3d  - %5.2f %5.2f %5.2f per square micron\n", name1, name2, sort_over[i].it->area, 
+	 n1, n2, sum, n1/area, n2/area, sum/area);
 	}
     return 42;
     }
@@ -3011,10 +2951,8 @@ root = 597861;
 CircuitBacktrace(name_map[root], from_to, names, wanted, trace, threshold);
 
 // sort the names by their assigned color.  (Better than names, which sort oddly in Mi1, Mi15, Mi1b, etc.)
-// Since columns a, c,e, and f are pale, and others yellow ometidia , we want them to sort together.   So map, then unmap.
 vector<sortname> sn(M);
 for(int k=0; k<names.size(); k++) {
-    //              a->  b->  c->  d->  e->  f->
     sn[k].index = k;
     // Normally, we sort by color.  This is an integer 0..2^24-1.  All cells of the same type have the same color,
     // so this sorts by cell type.  Next we sort by name - this puts the columns A-F at the top of the table.
@@ -3022,7 +2960,7 @@ for(int k=0; k<names.size(); k++) {
     // adding a small (less than 1.0) fraction to the color.  Since color overrides name, this will sort them
     // correctly.  And for columnar cells, color will still be identical, so sort will go to second key, name.
     sn[k].color = color(names[k]);
-    printf("Tweaking %s by %f\n", names[k], volumes[k]/1e6);
+    fprintf(logfile, "Tweaking %s by %f\n", names[k], volumes[k]/1e6);
     sn[k].color += 1-volumes[k]/1e6;
     sn[k].name  = names[k];
     char *last = names[k] + strlen(names[k]) -1;
@@ -3085,13 +3023,13 @@ for(int ii=0; ii<M+1; ii++) {  // One extra time, to print last table
         in_row_inc.clear(); out_row_inc.clear();
         out_stats.clear(); out_stats.resize(NumTypes, MeanStd());
         in_stats.clear();  in_stats.resize(NumTypes, MeanStd());
-	//LOG printf("\n");
+	fprintf(logfile, "\n");
 	}
     if (ii == M)
 	break;
-    //LOG printf("----------------- Starting analysis of '%s'\n", names[i]);
+    fprintf(logfile, "----------------- Starting analysis of '%s'\n", names[i]);
     cc = color(names[i]);
-    //LOG printf("----------------- Color is %d %x\n", cc,cc);
+    fprintf(logfile, "----------------- Color is %d %x\n", cc,cc);
 
     int sos = 0;  // sum of strengths
     for(int j=0; j<M; j++) {
@@ -3102,14 +3040,12 @@ for(int ii=0; ii<M+1; ii++) {  // One extra time, to print last table
         if (str > 0) {
             int tii = TypeIndex(names[i]);
             int tij = TypeIndex(names[j]);
-            if (tij == 13)
-		//LOG printf("Connection to type 13 (Mi1) of strength %d\n", str);
 	    out_stats[TypeIndex(names[j])].Element(str);
             }
 	}
     sort(sa.begin(), sa.end());
     if (sa[0].val > 0) {
-        //LOG printf("cell %11s -> ", names[i]);
+        fprintf(logfile, "cell %11s -> ", names[i]);
         out_row_ids.push_back(i);
         out_row_sums.push_back(sos);
         out_row_vols.push_back(volumes[i]);
@@ -3127,7 +3063,7 @@ for(int ii=0; ii<M+1; ii++) {  // One extra time, to print last table
         out_rows.push_back(one_row);
         out_rows_dat.push_back(one_row_dat);
         out_rows_recip.push_back(one_row_recip);
-        //LOG printf("\n");
+        fprintf(logfile, "\n");
 	}
     // now do the same for incoming
     sos = 0;
@@ -3144,7 +3080,7 @@ for(int ii=0; ii<M+1; ii++) {  // One extra time, to print last table
 	}
     sort(sa.begin(), sa.end());
     if (sa[0].val > 0) {
-        //LOG printf("cell %11s <- ", names[i]);
+        fprintf(logfile, "cell %11s <- ", names[i]);
         in_row_ids.push_back(i);
         in_row_sums.push_back(sos);
         in_row_vols.push_back(volumes[i]);
@@ -3162,7 +3098,9 @@ for(int ii=0; ii<M+1; ii++) {  // One extra time, to print last table
         in_rows.push_back(one_row);
         in_rows_dat.push_back(one_row_dat);
         in_rows_recip.push_back(one_row_recip);
-        //LOG printf("\n");
+        fprintf(logfile, "\n");
 	}
     }
+    fclose(logfile);
+    printf("Complete\n");
 }

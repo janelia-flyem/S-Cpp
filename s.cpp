@@ -2428,7 +2428,7 @@ int main(int argc, char **argv)
             {char *tmp = name1; name1 = name2; name2 = tmp; int t = n1; n1 = n2; n2 = t;}
             int sum = from_to[id1][id2] + from_to[id2][id1];
             double area = sort_over[i].it->area;
-            fprintf(logfile, "%9s %9s %10.4f - %3d %3d %3d  - %5.2f %5.2f %5.2f per square micron\n", name1, name2, sort_over[i].it->area, 
+            fprintf(logfile, "%9s %9s %10.4f - %3d %3d %3d  - %5.2f %5.2f %5.2f per square micron\n", name1, name2, sort_over[i].it->area,
                     n1, n2, sum, n1/area, n2/area, sum/area);
         }
         return 42;
@@ -2501,7 +2501,7 @@ int main(int argc, char **argv)
         
         // new color?  then print the old table, if any, then start new table
         if (ii == M || color(names[i]) != cc) {
-            if (in_row_ids.size()> 0) 
+            if (in_row_ids.size()> 0)
                 write_html(names, rev_map, in_row_ids,  "in",  in_rows,   in_rows_dat,  in_rows_recip, in_row_sums, in_row_vols, in_row_area, in_row_inc,
                            in_stats, Tbar_count);
             if (out_row_ids.size() > 0) {
